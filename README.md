@@ -213,3 +213,32 @@ ng test
 ## 9. 開發狀態
 
 目前專案以 Portal 基礎架構及核心功能為主要開發目標，後續將逐步擴充企業內部應用整合能力。
+
+## 10. 展示環境與 Microsoft Entra SSO
+
+### 本機驗證
+
+執行 `npm ci`、`npm run build`，接著執行 `npm run start:server`。開啟 `http://localhost:3000` 可查看登入頁。填妥 `.env` 後，改用 `node --env-file=.env server/index.mjs` 啟動後端以測試公司帳號登入。可複製 `.env.example` 作為設定範本。
+
+若使用 `npm start` 開發畫面，保持後端執行，並將 `APP_ORIGIN` 設為 `http://localhost:4200`。Angular 開發伺服器會將 `/auth` 和 `/api` 轉發至後端。Entra 登入回呼需使用相同的 origin。
+
+### Railway 部署順序
+
+1. 從這個分支部署 GitHub repo，讓 Railway 使用根目錄的 `Dockerfile` 建置 Portal。服務使用 Railway 提供的 `PORT`，Healthcheck Path 設為 `/healthz`。
+2. 在服務的 **Networking** 選擇 **Generate Domain**。先用產生的 HTTPS 網址檢查登入頁能開啟。
+3. 在 Microsoft Entra ID 的 **App registrations** 建立單一租戶的 Web 應用。新增 `https://<Railway 網域>/auth/callback` 為 **Web** redirect URI。到 **Certificates & secrets** 建立 Client Secret，使用其 **Value**。
+4. 在 Railway 服務的 **Variables** 設定下表，重新部署。
+5. 用公司測試帳號驗證登入、工作台、重新整理及登出。登出會結束 Portal 的 session 並直接回到 `/login`。使用者重新登入時，可以沿用 Microsoft 的 SSO session。
+
+| 變數 | 值 |
+|---|---|
+| `APP_ORIGIN` | Railway 公開 HTTPS 網址，例如 `https://noah-portal.up.railway.app` |
+| `ENTRA_TENANT_ID` | Entra 的 Directory (tenant) ID |
+| `ENTRA_CLIENT_ID` | Entra 的 Application (client) ID |
+| `ENTRA_CLIENT_SECRET` | Entra Client Secret 的 **Value**，只存於 Railway Variables 或本機 `.env` |
+| `ENTRA_EMPLOYEE_LOGIN_DOMAIN` | 員工 Entra 登入名稱中 `@` 後的網域，例如 `company.onmicrosoft.com` |
+| `SESSION_SECRET` | 隨機值，至少 32 bytes。可以執行 `node -p "require('node:crypto').randomBytes(32).toString('hex')"` 產生 |
+
+員工編號登入使用 Entra 帳號的登入名稱（UPN）。例如輸入 `E00123`，Portal 會預填 `E00123@company.onmicrosoft.com` 並由 Microsoft 驗證。請在 Entra 建立或確認一筆符合這個規則的測試帳號。
+
+展示環境使用單一實例保存 session。服務重新部署或重啟後，使用者需重新登入。

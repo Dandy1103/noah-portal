@@ -1,0 +1,24 @@
+<div class="login u-grid">
+    <noah-header></noah-header>
+
+    <main class="login__main u-grid u-px-md">
+        <section class="login__content u-grid u-gap-lg" aria-labelledby="login-title">
+            <h1 id="login-title" class="login__title u-text-brand">登入工作台</h1>
+
+            @if (errorMessage; as error) {
+                <p class="login__error u-text-sm u-text-danger u-rounded u-px-md u-py-sm" role="alert">{{ error }}</p>
+            }
+            <form class="u-grid u-gap-md" action="/auth/login" method="post">
+                <div class="u-grid u-gap-sm">
+                    <label class="u-text-sm u-font-semibold" for="employee-number">員工編號</label>
+                    <input id="employee-number" name="employeeNumber" type="text" autocomplete="username"
+                        autocapitalize="off" spellcheck="false" maxlength="32" required
+                        class="login__input u-border u-rounded u-px-md u-bg-surface">
+                </div>
+                <button class="login__action u-bg-brand u-text-on-brand u-text-sm u-font-semibold u-rounded"
+                    type="submit">登入</button>
+            </form>
+            <a class="login__alternate u-text-secondary u-text-sm" href="/auth/login">使用完整公司帳號</a>
+        </section>
+    </main>
+</div>

@@ -14,8 +14,21 @@
     padding-inline-start: var(--spacing-md);
 }
 
+.portal-header__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.portal-header__logout {
+    border: 1px solid rgb(255 255 255 / 28%);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: inherit;
+}
+
 @media (max-width: 440px) {
-    .portal-header__product {
+    .portal-header__product,
+    .portal-header__name {
         display: none;
     }
 }

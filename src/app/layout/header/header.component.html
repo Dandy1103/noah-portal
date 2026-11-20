@@ -1,5 +1,10 @@
 <header class="portal-header u-flex u-items-center u-gap-md u-px-md u-bg-brand u-text-on-brand">
     <img class="portal-header__logo" src="assets/images/logo.png" width="360" height="120" alt="諾亞數智">
     <span class="portal-header__product u-nowrap u-text-sm u-font-semibold">Noah Portal</span>
-    <span class="u-push-end u-nowrap u-text-sm">林怡君</span>
+    @if (user(); as currentUser) {
+        <form class="u-push-end u-flex u-items-center u-gap-sm u-min-w-0 u-text-sm" action="/auth/logout" method="post">
+            <span class="portal-header__name u-nowrap">{{ currentUser.displayName }}</span>
+            <button class="portal-header__logout u-nowrap u-px-sm u-py-sm" type="submit">登出</button>
+        </form>
+    }
 </header>
