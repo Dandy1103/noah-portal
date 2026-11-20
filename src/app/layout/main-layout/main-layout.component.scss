@@ -1,0 +1,28 @@
+.portal-layout {
+    min-height: 100dvh;
+    grid-template-rows: auto 1fr;
+}
+
+.portal-layout__body {
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+}
+
+noah-sidebar {
+    border-inline-end: 1px solid var(--color-border);
+}
+
+.portal-layout__content {
+    padding: clamp(var(--spacing-md), 3vw, var(--spacing-xl));
+}
+
+@media (max-width: 760px) {
+    .portal-layout__body {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto 1fr;
+    }
+
+    noah-sidebar {
+        border-inline-end: 0;
+        border-block-end: 1px solid var(--color-border);
+    }
+}

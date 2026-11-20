@@ -1,0 +1,28 @@
+.dashboard {
+    max-width: 1200px;
+    margin-inline: auto;
+}
+
+.dashboard__applications {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dashboard__details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard__task {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+@media (max-width: 1060px) {
+    .dashboard__details {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 880px) {
+    .dashboard__applications {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

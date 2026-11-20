@@ -1,1 +1,75 @@
-<p>dashboard works!</p>
+<div class="dashboard u-grid u-gap-xl">
+    <header class="u-flex u-items-baseline u-justify-between u-flex-wrap u-gap-sm u-border-bottom u-py-md">
+        <h1 class="u-text-xl u-text-brand">工作台</h1>
+        <time class="u-text-sm u-text-secondary" datetime="2026-11-20">11 月 20 日，星期五</time>
+    </header>
+
+    <section aria-labelledby="applications-title">
+        <h2 id="applications-title" class="u-text-md u-font-bold">常用應用程式</h2>
+        <ul class="dashboard__applications u-list-none u-grid u-gap-sm u-mt-md">
+            <li class="u-bg-surface u-border u-rounded u-p-md">
+                <h3 class="u-text-sm u-font-semibold">Noah HRM</h3>
+                <p class="u-text-xs u-text-secondary">人力資源管理</p>
+            </li>
+            <li class="u-bg-surface u-border u-rounded u-p-md">
+                <h3 class="u-text-sm u-font-semibold">Noah ERP</h3>
+                <p class="u-text-xs u-text-secondary">企業資源規劃</p>
+            </li>
+            <li class="u-bg-surface u-border u-rounded u-p-md">
+                <h3 class="u-text-sm u-font-semibold">Noah CRM</h3>
+                <p class="u-text-xs u-text-secondary">客戶關係管理</p>
+            </li>
+            <li class="u-bg-surface u-border u-rounded u-p-md">
+                <h3 class="u-text-sm u-font-semibold">Noah ITSM</h3>
+                <p class="u-text-xs u-text-secondary">IT 服務管理</p>
+            </li>
+        </ul>
+    </section>
+
+    <div class="dashboard__details u-grid u-gap-md">
+        <section class="u-bg-surface u-border u-rounded" aria-labelledby="tasks-title">
+            <h2 id="tasks-title" class="u-border-bottom u-px-md u-py-md u-text-md u-font-bold">我的待辦</h2>
+            <ul class="u-list-none u-divide-y">
+                <li class="dashboard__task u-grid u-items-center u-gap-sm u-px-md u-py-sm">
+                    <div>
+                        <h3 class="u-text-sm u-font-semibold">確認本週採購申請</h3>
+                        <p class="u-text-xs u-text-secondary">Noah ERP · 待簽核</p>
+                    </div>
+                    <span class="u-nowrap u-text-xs u-text-danger u-font-semibold">今日到期</span>
+                </li>
+                <li class="dashboard__task u-grid u-items-center u-gap-sm u-px-md u-py-sm">
+                    <div>
+                        <h3 class="u-text-sm u-font-semibold">提交本月教育訓練回饋</h3>
+                        <p class="u-text-xs u-text-secondary">Noah HRM · 待填寫</p>
+                    </div>
+                    <time class="u-nowrap u-text-xs u-text-secondary" datetime="2026-11-24">11 月 24 日</time>
+                </li>
+                <li class="dashboard__task u-grid u-items-center u-gap-sm u-px-md u-py-sm">
+                    <div>
+                        <h3 class="u-text-sm u-font-semibold">更新客戶會議紀錄</h3>
+                        <p class="u-text-xs u-text-secondary">Noah CRM · 待更新</p>
+                    </div>
+                    <time class="u-nowrap u-text-xs u-text-secondary" datetime="2026-11-25">11 月 25 日</time>
+                </li>
+            </ul>
+        </section>
+
+        <section class="u-bg-surface u-border u-rounded" aria-labelledby="announcements-title">
+            <h2 id="announcements-title" class="u-border-bottom u-px-md u-py-md u-text-md u-font-bold">公司公告</h2>
+            <ul class="u-list-none u-divide-y">
+                <li class="u-px-md u-py-sm">
+                    <h3 class="u-text-sm u-font-semibold">ERP 將於週六晚間例行維護</h3>
+                    <p class="u-text-xs u-text-secondary">系統維護 · <time datetime="2026-11-20">11 月 20 日</time></p>
+                </li>
+                <li class="u-px-md u-py-sm">
+                    <h3 class="u-text-sm u-font-semibold">年度健康檢查開放預約</h3>
+                    <p class="u-text-xs u-text-secondary">人資公告 · <time datetime="2026-11-18">11 月 18 日</time></p>
+                </li>
+                <li class="u-px-md u-py-sm">
+                    <h3 class="u-text-sm u-font-semibold">十二月全員大會議程</h3>
+                    <p class="u-text-xs u-text-secondary">公司活動 · <time datetime="2026-11-16">11 月 16 日</time></p>
+                </li>
+            </ul>
+        </section>
+    </div>
+</div>

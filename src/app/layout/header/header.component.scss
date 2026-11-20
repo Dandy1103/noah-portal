@@ -1,0 +1,21 @@
+.portal-header {
+    min-height: var(--header-height);
+}
+
+.portal-header__logo {
+    width: 210px;
+    height: var(--header-height);
+    margin-inline-start: -10px;
+    object-fit: cover;
+}
+
+.portal-header__product {
+    border-inline-start: 1px solid rgb(255 255 255 / 28%);
+    padding-inline-start: var(--spacing-md);
+}
+
+@media (max-width: 440px) {
+    .portal-header__product {
+        display: none;
+    }
+}
