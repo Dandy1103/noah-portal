@@ -214,31 +214,57 @@ ng test
 
 目前專案以 Portal 基礎架構及核心功能為主要開發目標，後續將逐步擴充企業內部應用整合能力。
 
-## 10. 展示環境與 Microsoft Entra SSO
+## 10. Keycloak 單一登入
 
 ### 本機驗證
 
-執行 `npm ci`、`npm run build`，接著執行 `npm run start:server`。開啟 `http://localhost:3000` 可查看登入頁。填妥 `.env` 後，改用 `node --env-file=.env server/index.mjs` 啟動後端以測試公司帳號登入。可複製 `.env.example` 作為設定範本。
+在專案根目錄執行：
 
-若使用 `npm start` 開發畫面，保持後端執行，並將 `APP_ORIGIN` 設為 `http://localhost:4200`。Angular 開發伺服器會將 `/auth` 和 `/api` 轉發至後端。Entra 登入回呼需使用相同的 origin。
+```powershell
+node keycloak/create-local-env.mjs
+docker compose --env-file .env.keycloak -f keycloak/compose.yaml up -d --build
+npm.cmd ci
+npm.cmd run build
+node --env-file=.env.keycloak server/employees-cli.mjs migrate
+node --env-file=.env.keycloak server/index.mjs
+```
 
-### Railway 部署順序
+開啟 `http://localhost:3000/login`，點「使用員工帳號登入」。測試員工編號是 `e00123`，密碼是本機 `.env.keycloak` 裡的 `KEYCLOAK_DEMO_PASSWORD`。Keycloak 管理介面在 `http://localhost:8081/admin/`，管理員帳號是 `admin`，密碼取自同一檔案的 `KC_BOOTSTRAP_ADMIN_PASSWORD`。
 
-1. 從這個分支部署 GitHub repo，讓 Railway 使用根目錄的 `Dockerfile` 建置 Portal。服務使用 Railway 提供的 `PORT`，Healthcheck Path 設為 `/healthz`。
-2. 在服務的 **Networking** 選擇 **Generate Domain**。先用產生的 HTTPS 網址檢查登入頁能開啟。
-3. 在 Microsoft Entra ID 的 **App registrations** 建立單一租戶的 Web 應用。新增 `https://<Railway 網域>/auth/callback` 為 **Web** redirect URI。到 **Certificates & secrets** 建立 Client Secret，使用其 **Value**。
-4. 在 Railway 服務的 **Variables** 設定下表，重新部署。
-5. 用公司測試帳號驗證登入、工作台、重新整理及登出。登出會結束 Portal 的 session 並直接回到 `/login`。使用者重新登入時，可以沿用 Microsoft 的 SSO session。
+若使用 `npm start` 開發畫面，保持後端執行，並將 `APP_ORIGIN` 改成 `http://localhost:4200`。Angular 會將 `/auth` 和 `/api` 轉發至後端。
+
+### Railway 設定
+
+Portal 使用根目錄的 `Dockerfile`，健康檢查路徑為 `/healthz`。Keycloak 可另開服務，以 `keycloak/Dockerfile` 建置品牌登入頁。上線時為 Keycloak 設定 HTTPS 網址 `login.dandy-cheng.com`、PostgreSQL 與正式 realm。建立 Portal 的 OIDC client，開啟 Client authentication 和 Standard flow，要求 S256 PKCE，登入回呼填 `https://noahportal.dandy-cheng.com/auth/callback`。
 
 | 變數 | 值 |
 |---|---|
-| `APP_ORIGIN` | Railway 公開 HTTPS 網址，例如 `https://noah-portal.up.railway.app` |
-| `ENTRA_TENANT_ID` | Entra 的 Directory (tenant) ID |
-| `ENTRA_CLIENT_ID` | Entra 的 Application (client) ID |
-| `ENTRA_CLIENT_SECRET` | Entra Client Secret 的 **Value**，只存於 Railway Variables 或本機 `.env` |
-| `ENTRA_EMPLOYEE_LOGIN_DOMAIN` | 員工 Entra 登入名稱中 `@` 後的網域，例如 `company.onmicrosoft.com` |
+| `APP_ORIGIN` | Portal 的 HTTPS 網址，例如 `https://noahportal.dandy-cheng.com` |
+| `OIDC_ISSUER_URL` | Keycloak realm 的 HTTPS 網址，例如 `https://login.dandy-cheng.com/realms/noah` |
+| `OIDC_CLIENT_ID` | Keycloak client ID |
+| `OIDC_CLIENT_SECRET` | Keycloak client secret |
 | `SESSION_SECRET` | 隨機值，至少 32 bytes。可以執行 `node -p "require('node:crypto').randomBytes(32).toString('hex')"` 產生 |
+| `DATABASE_URL` | Portal 員工資料庫的 PostgreSQL 連線網址 |
 
-員工編號登入使用 Entra 帳號的登入名稱（UPN）。例如輸入 `E00123`，Portal 會預填 `E00123@company.onmicrosoft.com` 並由 Microsoft 驗證。請在 Entra 建立或確認一筆符合這個規則的測試帳號。
+Portal 登出會結束 Portal session 並回到登入頁。若 Keycloak 的登入狀態仍有效，再次登入時可沿用同一個帳號。
 
-展示環境使用單一實例保存 session。服務重新部署或重啟後，使用者需重新登入。
+### 員工資料
+
+用 Keycloak 管理登入帳號，用 Portal 的 PostgreSQL 存員工編號、姓名、部門和在職狀態。員工登入後可以在工作台看到自己的紀錄。
+
+在 Keycloak 建立員工帳號後，從使用者頁面複製 **ID**。用這個 ID 把該帳號和員工資料連起來：
+
+```powershell
+node --env-file=.env.keycloak server/employees-cli.mjs add E00123 '測試員工' '資訊部' '<Keycloak 使用者 ID>'
+```
+
+相鄰的 `noah-hrm` 專案有新增員工表單。在 HRM 專案執行 `npm.cmd run build -- --base-href /hrm/`，再在 Portal 的本機 `.env.keycloak` 加上：
+
+```dotenv
+HRM_BROWSER_DIRECTORY=../noah-hrm/dist/noah-hrm/browser
+HRM_ADMIN_SUBJECT=<負責新增員工的 Keycloak 使用者 ID>
+```
+
+重啟 Portal 後，開啟 `http://localhost:3000/hrm/`。登入的使用者必須符合 `HRM_ADMIN_SUBJECT` 才能新增。表單與 CLI 寫入同一張員工資料表。
+
+Railway 上線時，為 Portal 提供 PostgreSQL 和 `DATABASE_URL`，再以該環境的變數執行 `node server/employees-cli.mjs migrate` 建表。

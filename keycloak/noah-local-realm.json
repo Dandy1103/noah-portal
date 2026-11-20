@@ -1,0 +1,52 @@
+{
+  "realm": "noah-local",
+  "displayName": "諾亞數智",
+  "displayNameHtml": "諾亞數智",
+  "enabled": true,
+  "loginTheme": "noah",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["zh-Hant"],
+  "defaultLocale": "zh-Hant",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": false,
+  "bruteForceProtected": true,
+  "clients": [
+    {
+      "clientId": "noah-portal",
+      "name": "Noah Portal",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${OIDC_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": [
+        "http://localhost:3000/auth/callback",
+        "http://localhost:4200/auth/callback"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "e00123",
+      "firstName": "測試",
+      "lastName": "員工",
+      "email": "e00123@example.test",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_DEMO_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

@@ -4,11 +4,29 @@
         <time class="u-text-sm u-text-secondary" datetime="2026-11-20">11 月 20 日，星期五</time>
     </header>
 
+    @if (employee(); as profile) {
+        <section class="u-grid u-gap-md u-bg-surface u-border u-rounded u-p-md" aria-labelledby="employee-title">
+            <h2 id="employee-title" class="u-text-md u-font-bold">我的員工資料</h2>
+            <dl class="dashboard__employee u-grid u-gap-md">
+                <div><dt>員工編號</dt><dd>{{ profile.employeeNumber }}</dd></div>
+                <div><dt>姓名</dt><dd>{{ profile.displayName }}</dd></div>
+                <div><dt>部門</dt><dd>{{ profile.department }}</dd></div>
+                <div><dt>在職狀態</dt><dd>{{ profile.status === 'active' ? '在職' : '非在職' }}</dd></div>
+            </dl>
+        </section>
+    }
+
     <section aria-labelledby="applications-title">
         <h2 id="applications-title" class="u-text-md u-font-bold">常用應用程式</h2>
         <ul class="dashboard__applications u-list-none u-grid u-gap-sm u-mt-md">
             <li class="u-bg-surface u-border u-rounded u-p-md">
-                <h3 class="u-text-sm u-font-semibold">Noah HRM</h3>
+                <h3 class="u-text-sm u-font-semibold">
+                    @if (user()?.hrmAvailable) {
+                        <a href="/hrm/" class="dashboard__app-link">Noah HRM</a>
+                    } @else {
+                        Noah HRM
+                    }
+                </h3>
                 <p class="u-text-xs u-text-secondary">人力資源管理</p>
             </li>
             <li class="u-bg-surface u-border u-rounded u-p-md">

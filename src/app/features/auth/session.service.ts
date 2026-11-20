@@ -5,6 +5,7 @@ import { catchError, map, of, tap } from 'rxjs';
 
 interface PortalUser {
     displayName: string;
+    hrmAvailable: boolean;
 }
 
 @Injectable({ providedIn: 'root' })

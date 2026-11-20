@@ -1,0 +1,32 @@
+services:
+  portal-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: noah_portal
+      POSTGRES_USER: noah_portal
+      POSTGRES_PASSWORD: ${PORTAL_DB_PASSWORD:?Set the local Portal database password}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - noah-portal-db:/var/lib/postgresql/data
+
+  keycloak:
+    build:
+      context: ..
+      dockerfile: keycloak/Dockerfile
+    command: [start-dev, --import-realm]
+    environment:
+      KC_HOSTNAME: http://localhost:8081
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD:?Set the local Keycloak admin password}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?Set the local OIDC client secret}
+      KEYCLOAK_DEMO_PASSWORD: ${KEYCLOAK_DEMO_PASSWORD:?Set the local employee password}
+    ports:
+      - "127.0.0.1:8081:8080"
+    volumes:
+      - noah-keycloak-data:/opt/keycloak/data
+      - ./noah-local-realm.json:/opt/keycloak/data/import/noah-local-realm.json:ro
+
+volumes:
+  noah-portal-db:
+  noah-keycloak-data:

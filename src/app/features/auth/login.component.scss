@@ -18,40 +18,18 @@
     letter-spacing: -0.025em;
 }
 
-.login__input,
 .login__action {
     min-height: 48px;
-}
-
-.login__input {
-    width: 100%;
-    min-width: 0;
-    color: var(--color-text-primary);
-}
-
-.login__action {
-    border: 0;
+    place-items: center;
 }
 
 .login__action:hover {
     background-color: var(--color-primary-hover);
 }
 
-.login__input:focus-visible,
-.login__action:focus-visible,
-.login__alternate:focus-visible {
+.login__action:focus-visible {
     outline: 2px solid var(--color-info);
     outline-offset: 2px;
-}
-
-.login__alternate {
-    justify-self: start;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
-.login__alternate:hover {
-    color: var(--color-primary);
 }
 
 .login__error {

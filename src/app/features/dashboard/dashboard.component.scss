@@ -7,6 +7,28 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.dashboard__app-link {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.dashboard__employee {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 135px), 1fr));
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.dashboard__employee dt {
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+}
+
+.dashboard__employee dd {
+    margin: var(--spacing-xs) 0 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
 .dashboard__details {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
