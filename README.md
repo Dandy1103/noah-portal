@@ -268,3 +268,16 @@ HRM_ADMIN_SUBJECT=<負責新增員工的 Keycloak 使用者 ID>
 重啟 Portal 後，開啟 `http://localhost:3000/hrm/`。登入的使用者必須符合 `HRM_ADMIN_SUBJECT` 才能新增。表單與 CLI 寫入同一張員工資料表。
 
 Railway 上線時，為 Portal 提供 PostgreSQL 和 `DATABASE_URL`，再以該環境的變數執行 `node server/employees-cli.mjs migrate` 建表。
+
+### HRM 本機開發接 develop
+
+在 Railway 的 **develop 環境**部署這版 Portal，設定 `HRM_DEV_SSO_ENABLED=true`。使用 develop 的 Keycloak realm、員工資料庫與 `HRM_ADMIN_SUBJECT`。在 develop Keycloak 的 Portal client 的 **Valid redirect URIs** 加上 `http://localhost:4201/auth/hrm-dev/callback`。
+
+在 `noah-hrm` 設定 develop Portal 網址後啟動 Angular 開發伺服器：
+
+```powershell
+$env:HRM_DEV_PORTAL_ORIGIN = 'https://<develop Portal 網址>'
+npm.cmd start
+```
+
+開啟 `http://localhost:4201/`，點「登入」。Keycloak 登入完成後會回到本機 HRM。新增員工會寫入 develop 資料庫。

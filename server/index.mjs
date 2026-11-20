@@ -16,6 +16,9 @@ const port = process.env.PORT || 3000;
 const publicUrl = new URL(process.env.APP_ORIGIN || 'http://localhost:3000');
 const callbackPath = '/auth/callback';
 const callbackUrl = new URL(callbackPath, publicUrl);
+const hrmDevEnabled = process.env.HRM_DEV_SSO_ENABLED === 'true';
+const hrmDevCallbackPath = '/auth/hrm-dev/callback';
+const hrmDevCallbackUrl = new URL(hrmDevCallbackPath, 'http://localhost:4201');
 const secure = publicUrl.protocol === 'https:';
 const cookieName = secure ? '__Host-noah.sid' : 'noah.sid';
 const issuerUrl = process.env.OIDC_ISSUER_URL && new URL(process.env.OIDC_ISSUER_URL);
@@ -88,10 +91,15 @@ if (ssoConfigured) {
     }));
 }
 
-app.get('/auth/login', async (request, response) => {
-    if (!ssoConfigured) return response.redirect('/login?error=unavailable');
-    const returnTo = hrmDirectory && request.query.next === 'hrm' ? '/hrm/' : '/';
-    if (request.session.user) return response.redirect(returnTo);
+function signInError(response, hrmDev, error) {
+    response.redirect(hrmDev ? `/?authError=${error}` : `/login?error=${error}`);
+}
+
+async function startSignIn(request, response, hrmDev) {
+    if (hrmDev && !hrmDevEnabled) return response.sendStatus(404);
+    if (!ssoConfigured) return signInError(response, hrmDev, 'unavailable');
+    const returnTo = !hrmDev && hrmDirectory && request.query.next === 'hrm' ? '/hrm/' : '/';
+    if (request.session.user && Boolean(request.session.hrmDev) === hrmDev) return response.redirect(returnTo);
 
     try {
         const config = await oidcConfiguration();
@@ -99,39 +107,43 @@ app.get('/auth/login', async (request, response) => {
         const state = oidc.randomState();
         const nonce = oidc.randomNonce();
         const authorization = oidc.buildAuthorizationUrl(config, {
-            redirect_uri: callbackUrl.href,
+            redirect_uri: (hrmDev ? hrmDevCallbackUrl : callbackUrl).href,
             scope: 'openid profile',
             code_challenge: await oidc.calculatePKCECodeChallenge(verifier),
             code_challenge_method: 'S256',
             state,
             nonce
         });
-        request.session.signIn = { verifier, state, nonce, returnTo, expiresAt: Date.now() + signInLifetime };
+        request.session.signIn = { verifier, state, nonce, returnTo, hrmDev, expiresAt: Date.now() + signInLifetime };
         request.session.save((error) => {
-            if (error) return response.redirect('/login?error=unavailable');
+            if (error) return signInError(response, hrmDev, 'unavailable');
             response.redirect(authorization.href);
         });
     } catch {
-        response.redirect('/login?error=unavailable');
+        signInError(response, hrmDev, 'unavailable');
     }
-});
+}
 
-app.get(callbackPath, async (request, response) => {
-    if (Object.keys(request.query).length === 0) {
+app.get('/auth/login', (request, response) => startSignIn(request, response, false));
+app.get('/auth/hrm-dev/login', (request, response) => startSignIn(request, response, true));
+
+async function finishSignIn(request, response, hrmDev) {
+    if (hrmDev && !hrmDevEnabled) return response.sendStatus(404);
+    if (!hrmDev && Object.keys(request.query).length === 0) {
         return response.redirect(request.session?.user ? '/' : '/login');
     }
 
-    if (!ssoConfigured) return response.redirect('/login?error=unavailable');
+    if (!ssoConfigured) return signInError(response, hrmDev, 'unavailable');
 
     const signIn = request.session.signIn;
-    if (!signIn || Date.now() >= signIn.expiresAt || request.query.state !== signIn.state) {
-        return response.redirect('/login?error=signin');
+    if (!signIn || Boolean(signIn.hrmDev) !== hrmDev || Date.now() >= signIn.expiresAt || request.query.state !== signIn.state) {
+        return signInError(response, hrmDev, 'signin');
     }
 
     try {
         delete request.session.signIn;
         await new Promise((done, fail) => request.session.save((error) => error ? fail(error) : done()));
-        const callback = new URL(callbackUrl);
+        const callback = new URL(hrmDev ? hrmDevCallbackUrl : callbackUrl);
         callback.search = new URL(request.originalUrl, publicUrl).search;
         const tokens = await oidc.authorizationCodeGrant(await oidcConfiguration(), callback, {
             expectedState: signIn.state,
@@ -139,23 +151,28 @@ app.get(callbackPath, async (request, response) => {
             pkceCodeVerifier: signIn.verifier
         });
         const claims = tokens.claims();
-        if (!claims?.sub || !claims.iss) return response.redirect('/login?error=signin');
+        if (!claims?.sub || !claims.iss) return signInError(response, hrmDev, 'signin');
 
         request.session.regenerate((error) => {
-            if (error) return response.redirect('/login?error=unavailable');
+            if (error) return signInError(response, hrmDev, 'unavailable');
+            request.session.hrmDev = hrmDev;
             request.session.user = {
                 displayName: claims.name || claims.preferred_username || '員工',
                 issuer: claims.iss,
                 subject: claims.sub
             };
             request.session.save((saveError) => {
-                response.redirect(saveError ? '/login?error=unavailable' : (signIn.returnTo ?? '/'));
+                if (saveError) return signInError(response, hrmDev, 'unavailable');
+                response.redirect(signIn.returnTo ?? '/');
             });
         });
     } catch {
-        response.redirect('/login?error=signin');
+        signInError(response, hrmDev, 'signin');
     }
-});
+}
+
+app.get(callbackPath, (request, response) => finishSignIn(request, response, false));
+app.get(hrmDevCallbackPath, (request, response) => finishSignIn(request, response, true));
 
 app.post('/auth/logout', (request, response) => {
     if (request.get('Origin') !== publicUrl.origin) return response.sendStatus(403);
@@ -188,7 +205,8 @@ function requireHrmAdmin(request, response, next) {
 app.get('/api/hrm/access', requireHrmAdmin, (_request, response) => response.sendStatus(204));
 
 app.post('/api/hrm/employees', requireHrmAdmin, express.json({ limit: '4kb' }), async (request, response) => {
-    if (request.get('Origin') !== publicUrl.origin) return response.sendStatus(403);
+    const expectedOrigin = request.session.hrmDev ? hrmDevCallbackUrl.origin : publicUrl.origin;
+    if (request.get('Origin') !== expectedOrigin) return response.sendStatus(403);
     if (!employeeDatabase) return response.sendStatus(503);
     const employee = normalizeEmployee(request.body);
     if (!employee) return response.sendStatus(400);
