@@ -2,10 +2,21 @@
     min-height: var(--header-height);
 }
 
-.portal-header__logo {
+.portal-header__home {
     width: 210px;
+    min-width: 0;
     height: var(--header-height);
     margin-inline-start: -10px;
+}
+
+.portal-header__home:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.portal-header__logo {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
 }
 
@@ -28,6 +39,14 @@
 }
 
 @media (max-width: 440px) {
+    .portal-header__logo {
+        object-fit: contain;
+    }
+
+    .portal-header__actions {
+        flex-shrink: 0;
+    }
+
     .portal-header__product,
     .portal-header__name {
         display: none;

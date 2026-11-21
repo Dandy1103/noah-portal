@@ -91,8 +91,15 @@ final class Employees {
     Map<String, Object> profile(PortalIdentity.User user) {
         requireDatabase();
         return jdbc.queryForList("""
-                SELECT employee_number AS "employeeNumber", display_name AS "displayName", department, status
-                FROM employees WHERE oidc_issuer=? AND oidc_subject=?
+                SELECT e.employee_number AS "employeeNumber", e.display_name AS "displayName",
+                       COALESCE(d.name, e.department) AS department, e.status,
+                       e.job_title AS "jobTitle", to_char(e.hired_on, 'YYYY-MM-DD') AS "hiredOn",
+                       to_char(e.born_on, 'YYYY-MM-DD') AS "bornOn",
+                       e.employment_type AS "employmentType", m.display_name AS "managerName"
+                FROM employees e
+                LEFT JOIN departments d ON d.department_id = e.department_id
+                LEFT JOIN employees m ON m.employee_number = e.manager_employee_number
+                WHERE e.oidc_issuer=? AND e.oidc_subject=?
                 """, user.issuer(), user.subject()).stream().findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }

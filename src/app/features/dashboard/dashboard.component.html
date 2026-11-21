@@ -11,6 +11,11 @@
                 <div><dt>員工編號</dt><dd>{{ profile.employeeNumber }}</dd></div>
                 <div><dt>姓名</dt><dd>{{ profile.displayName }}</dd></div>
                 <div><dt>部門</dt><dd>{{ profile.department }}</dd></div>
+                <div><dt>職稱</dt><dd>{{ profile.jobTitle || '—' }}</dd></div>
+                <div><dt>到職日</dt><dd>{{ formatDate(profile.hiredOn) }}@if (profile.hiredOn) {（{{ tenureLabel(profile.hiredOn) }}）}</dd></div>
+                <div><dt>生日</dt><dd>{{ formatDate(profile.bornOn) }}</dd></div>
+                <div><dt>雇用型態</dt><dd>{{ employmentLabel(profile.employmentType) }}</dd></div>
+                <div><dt>直屬主管</dt><dd>{{ profile.managerName || '—' }}</dd></div>
                 <div><dt>在職狀態</dt><dd>{{ profile.status === 'active' ? '在職' : '非在職' }}</dd></div>
             </dl>
         </section>
