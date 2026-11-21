@@ -136,10 +136,26 @@ async function main() {
     for (const [wanted, host] of [[port, '127.0.0.1'], [frontend, 'localhost']]) {
         if (await listening(wanted, host)) throw new Error(wanted + ' 已被占用。請先停止舊的開發程序。');
     }
-    const docker = dockerCommand();
     const java = await selectJava();
-    run(process.execPath, ['keycloak/create-local-env.mjs']);
-    const local = await startLocalIdentity(docker, root, parseEnv(readFileSync(envFile, 'utf8')), 'noah-portal', frontend, 'keycloak/compose.yaml');
+    const externalFile = join(root, '.env.local');
+    const external = existsSync(externalFile) ? parseEnv(readFileSync(externalFile, 'utf8')) : {};
+    let configuration;
+    if (external.OIDC_ISSUER_URL) {
+        for (const name of ['OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET']) {
+            if (!external[name]) throw new Error('.env.local 缺少 ' + name + '。');
+        }
+        configuration = {
+            HRM_ADMIN_SUBJECT: '',
+            HRM_KEYCLOAK_CLIENT_ID: '',
+            HRM_KEYCLOAK_CLIENT_SECRET: '',
+            HRM_DEV_SSO_ENABLED: 'false',
+            ...external,
+        };
+    } else {
+        const docker = dockerCommand();
+        run(process.execPath, ['keycloak/create-local-env.mjs']);
+        configuration = await startLocalIdentity(docker, root, parseEnv(readFileSync(envFile, 'utf8')), 'noah-portal', frontend, 'keycloak/compose.yaml');
+    }
 
     if (!existsSync(join(root, 'dist', 'noah-portal', 'browser', 'index.html'))) {
         installFrontend(root);
@@ -149,7 +165,7 @@ async function main() {
 
     const env = {
         ...process.env,
-        ...local,
+        ...configuration,
         ...(java && { JAVA_HOME: java, PATH: join(java, 'bin') + delimiter + process.env.PATH }),
         MAVEN_USER_HOME: javaCache,
         PORT: String(port),
@@ -173,7 +189,7 @@ async function main() {
     ]).finally(() => startup.abort());
     if (!ready) throw new Error('服務提前停止，請查看 Maven 或 Angular 的訊息。');
     console.log('開啟 http://localhost:' + frontend + '/');
-    console.log('本機測試帳號 ' + demoLogin.toUpperCase() + '，初始密碼在 .env.shared-keycloak 的 KEYCLOAK_DEMO_PASSWORD。');
+    if (!external.OIDC_ISSUER_URL) console.log('本機測試帳號 ' + demoLogin.toUpperCase() + '，初始密碼在 .env.shared-keycloak 的 KEYCLOAK_DEMO_PASSWORD。');
     process.exitCode = await firstExit;
 }
 
