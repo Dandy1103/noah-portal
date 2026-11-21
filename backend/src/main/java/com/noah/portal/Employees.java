@@ -14,11 +14,9 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.server.ResponseStatusException;
@@ -63,13 +61,18 @@ final class Employees {
             return;
         }
         source = new HikariDataSource(databaseConfig(settings.databaseUrl));
+        jdbc = new JdbcTemplate(source);
         try {
-            new ResourceDatabasePopulator(new ClassPathResource("employees.sql")).execute(source);
+            if (!Boolean.TRUE.equals(jdbc.queryForObject("""
+                    SELECT to_regclass('public.employees') IS NOT NULL
+                        AND to_regclass('public.departments') IS NOT NULL
+                    """, Boolean.class))) {
+                throw new IllegalStateException("員工資料表尚未建立，請先在 Noah HRM 執行資料庫遷移。");
+            }
         } catch (RuntimeException error) {
             source.close();
             throw error;
         }
-        jdbc = new JdbcTemplate(source);
         tx = new TransactionTemplate(new DataSourceTransactionManager(source));
     }
 

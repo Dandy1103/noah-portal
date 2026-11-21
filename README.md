@@ -237,6 +237,8 @@ npm start
 
 兩個專案共用本機 Keycloak 與員工資料庫。測試登入字號為 `H247386514`（測試專用），初始密碼在 `.env.shared-keycloak` 的 `KEYCLOAK_DEMO_PASSWORD`。登入後點「變更密碼」，新密碼可登入兩邊。按 `Ctrl+C` 會停止目前專案的前端和後端，Docker 裡的 Keycloak 和 PostgreSQL 會留在背景。
 
+第一次使用新的員工資料庫時，先在 `noah-hrm` 執行 `npm run db:migrate` 或啟動 HRM，再啟動 Portal。
+
 #### 手動啟動
 
 先準備 JDK 21、Node.js 和 Docker Desktop。在專案根目錄執行：
@@ -280,7 +282,7 @@ java -jar target/noah-portal.jar link E00123 '測試員工' '資訊部' '<Keyclo
 
 員工帳號管理由 HRM 提供。Portal 如需顯示同一份員工資料，請使用同一個 Keycloak realm 與員工資料庫。
 
-為 Portal 提供 PostgreSQL 和 `DATABASE_URL` 後，Spring Boot 啟動時會更新員工資料表並保留既有紀錄。要單獨執行遷移時，可以用 `java -jar target/noah-portal.jar migrate`。
+員工資料表由 HRM 的 Flyway 遷移維護。Portal 的 `DATABASE_URL` 指向已完成遷移的 PostgreSQL。有資料表變更時，先部署 HRM 並確認遷移成功，再部署需要新欄位的 Portal。
 
 ### 帳號管理
 
