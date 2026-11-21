@@ -1,6 +1,7 @@
 FROM node:20-bookworm-slim AS frontend
 WORKDIR /app
-COPY package*.json ./
+COPY package.json package-lock.json .npmrc ./
+ARG NODE_AUTH_TOKEN
 RUN npm ci
 COPY angular.json tsconfig.json tsconfig.app.json ./
 COPY src ./src
