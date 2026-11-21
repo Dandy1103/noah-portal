@@ -7,6 +7,11 @@ services:
       POSTGRES_PASSWORD: ${PORTAL_DB_PASSWORD:?Set the local Portal database password}
     ports:
       - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "noah_portal", "-d", "noah_portal"]
+      interval: 3s
+      timeout: 2s
+      retries: 20
     volumes:
       - noah-portal-db:/var/lib/postgresql/data
 

@@ -17,6 +17,7 @@ Noah Portal 是一套企業內部入口平台，目標是建立統一的系統�
 | 技術 | 用途 |
 |---|---|
 | Angular 17 | 前端框架 |
+| Java 21、Spring Boot、Maven | Portal 與 HRM 各自啟動後端 |
 | TypeScript | 開發語言 |
 | SCSS | 樣式管理 |
 | RxJS | 非同步資料流處理 |
@@ -216,22 +217,41 @@ ng test
 
 ## 10. Keycloak 單一登入
 
+新網站部署、HRM 上線與常見錯誤請看 [網站部署手冊](docs/DEPLOYMENT.md)。
+
 ### 本機驗證
 
-在專案根目錄執行：
+#### Windows 一鍵啟動
+
+新電腦準備 Node.js 20.12 以上、Git 和 Docker Desktop。開啟 Docker Desktop 後，在 `noah-portal` 根目錄執行：
+
+```cmd
+npm start
+```
+
+指令會準備本機設定、Keycloak、PostgreSQL、JDK 21 和 Maven，並啟動 Portal 的 Angular 與 API。看到啟動完成後開 [本機 Portal](http://localhost:4200/)，未登入時會直接前往 Keycloak。
+
+在 `noah-hrm` 執行 `npm start`，開啟 [本機 HRM](http://localhost:4201/)。
+
+本機 Portal 首頁的「Noah HRM」預設連到 `http://localhost:4201/`。HRM 換 port 或獨立部署後，在 Portal 設定 `HRM_URL` 為 HRM 的網址。
+
+兩個專案共用本機 Keycloak 與員工資料庫。測試登入字號為 `H247386514`（測試專用），初始密碼在 `.env.shared-keycloak` 的 `KEYCLOAK_DEMO_PASSWORD`。登入後點「變更密碼」，新密碼可登入兩邊。按 `Ctrl+C` 會停止目前專案的前端和後端，Docker 裡的 Keycloak 和 PostgreSQL 會留在背景。
+
+#### 手動啟動
+
+先準備 JDK 21、Node.js 和 Docker Desktop。在專案根目錄執行：
 
 ```powershell
 node keycloak/create-local-env.mjs
-docker compose --env-file .env.keycloak -f keycloak/compose.yaml up -d --build
+docker compose --env-file .env.keycloak -f keycloak/compose.yaml up -d --no-recreate
 npm.cmd ci
 npm.cmd run build
-node --env-file=.env.keycloak server/employees-cli.mjs migrate
-node --env-file=.env.keycloak server/index.mjs
+.\mvnw.cmd spring-boot:run
 ```
 
-開啟 `http://localhost:3000/login`，點「使用員工帳號登入」。測試員工編號是 `e00123`，密碼是本機 `.env.keycloak` 裡的 `KEYCLOAK_DEMO_PASSWORD`。Keycloak 管理介面在 `http://localhost:8081/admin/`，管理員帳號是 `admin`，密碼取自同一檔案的 `KC_BOOTSTRAP_ADMIN_PASSWORD`。
+開啟 `http://localhost:3000/`，瀏覽器會前往 Keycloak。測試登入字號為 `H247386514`。若跑過 `npm start`，初始員工密碼與 Keycloak 管理員密碼可在 `.env.shared-keycloak` 分別查看 `KEYCLOAK_DEMO_PASSWORD` 和 `KC_BOOTSTRAP_ADMIN_PASSWORD`。管理員帳號是 `admin`，管理介面在 `http://localhost:8081/admin/`。
 
-若使用 `npm start` 開發畫面，保持後端執行，並將 `APP_ORIGIN` 改成 `http://localhost:4200`。Angular 會將 `/auth` 和 `/api` 轉發至後端。
+若要分開啟動，先設定 `$env:APP_ORIGIN = 'http://localhost:4200'` 再啟動 Spring Boot，接著在另一個視窗執行 `npm run ng -- serve` 啟動 Angular。Angular 會將 `/auth` 和 `/api` 轉發至後端。Spring Boot 會讀取專案根目錄的 `.env.keycloak`，終端機的同名變數優先。
 
 ### Railway 設定
 
@@ -243,10 +263,9 @@ Portal 使用根目錄的 `Dockerfile`，健康檢查路徑為 `/healthz`。Keyc
 | `OIDC_ISSUER_URL` | Keycloak realm 的 HTTPS 網址，例如 `https://login.dandy-cheng.com/realms/noah` |
 | `OIDC_CLIENT_ID` | Keycloak client ID |
 | `OIDC_CLIENT_SECRET` | Keycloak client secret |
-| `SESSION_SECRET` | 隨機值，至少 32 bytes。可以執行 `node -p "require('node:crypto').randomBytes(32).toString('hex')"` 產生 |
 | `DATABASE_URL` | Portal 員工資料庫的 PostgreSQL 連線網址 |
 
-Portal 登出會結束 Portal session 並回到登入頁。若 Keycloak 的登入狀態仍有效，再次登入時可沿用同一個帳號。
+Portal 和 HRM 登出時會結束目前網站的工作階段，再透過 Keycloak 結束單一登入並回到 Keycloak 登入頁。
 
 ### 員工資料
 
@@ -255,29 +274,22 @@ Portal 登出會結束 Portal session 並回到登入頁。若 Keycloak 的登�
 在 Keycloak 建立員工帳號後，從使用者頁面複製 **ID**。用這個 ID 把該帳號和員工資料連起來：
 
 ```powershell
-node --env-file=.env.keycloak server/employees-cli.mjs add E00123 '測試員工' '資訊部' '<Keycloak 使用者 ID>'
+.\mvnw.cmd package
+java -jar target/noah-portal.jar link E00123 '測試員工' '資訊部' '<Keycloak 使用者 ID>'
 ```
 
-相鄰的 `noah-hrm` 專案有新增員工表單。在 HRM 專案執行 `npm.cmd run build -- --base-href /hrm/`，再在 Portal 的本機 `.env.keycloak` 加上：
+員工帳號管理由 HRM 提供。Portal 如需顯示同一份員工資料，請使用同一個 Keycloak realm 與員工資料庫。
 
-```dotenv
-HRM_BROWSER_DIRECTORY=../noah-hrm/dist/noah-hrm/browser
-HRM_ADMIN_SUBJECT=<負責新增員工的 Keycloak 使用者 ID>
-```
+為 Portal 提供 PostgreSQL 和 `DATABASE_URL` 後，Spring Boot 啟動時會更新員工資料表並保留既有紀錄。要單獨執行遷移時，可以用 `java -jar target/noah-portal.jar migrate`。
 
-重啟 Portal 後，開啟 `http://localhost:3000/hrm/`。登入的使用者必須符合 `HRM_ADMIN_SUBJECT` 才能新增。表單與 CLI 寫入同一張員工資料表。
+### 帳號管理
 
-Railway 上線時，為 Portal 提供 PostgreSQL 和 `DATABASE_URL`，再以該環境的變數執行 `node server/employees-cli.mjs migrate` 建表。
+HRM 用身分證字號建立 Keycloak 登入帳號，員工資料仍使用員工編號。新增時會驗證字號的格式和檢查碼。員工首次登入需更改初始密碼。已由 HRM 管理的員工可在修改帳號時填入新字號。以 CLI 手動連結的帳號可在 Keycloak 管理介面修改。 [國民身分證統一編號檢查方法](https://gazette.nat.gov.tw/EG_FileManager/eguploadpub/eg027242/ch04/type2/gov30/num8/images/BB.pdf)
 
-### HRM 本機開發接 develop
+線上環境若要讓 HRM 更新登入字號，在 Keycloak 的 **Realm settings → User profile → username** 將編輯權限設為 **Admin**，並在 **Realm settings → Login** 開啟 **Edit username**。已登入的員工可照常自行變更密碼。 [Keycloak 使用者屬性設定](https://www.keycloak.org/docs/latest/server_admin/#_user-profile)
 
-在 Railway 的 **develop 環境**部署這版 Portal，設定 `HRM_DEV_SSO_ENABLED=true`。使用 develop 的 Keycloak realm、員工資料庫與 `HRM_ADMIN_SUBJECT`。在 develop Keycloak 的 Portal client 的 **Valid redirect URIs** 加上 `http://localhost:4201/auth/hrm-dev/callback`。
+在 Portal 使用的 Keycloak realm 另建一個管理 client，例如 `noah-hrm-management`。開啟 **Client authentication** 和 **Service accounts roles**，關閉 **Standard flow** 與 **Direct access grants**。在 **Service account roles** 指派 `realm-management` 的 `manage-users`，並在該 client 的專用 scope 允許這個角色。 [Keycloak Service Account 設定](https://www.keycloak.org/docs/latest/server_admin/#_service_accounts)
 
-在 `noah-hrm` 設定 develop Portal 網址後啟動 Angular 開發伺服器：
+Keycloak 26.8.2 的管理 API 也需要 `kc-admin-api`。在管理 client 的 **Client scopes** 把它加成 **Default**。 [Keycloak 升級說明](https://www.keycloak.org/docs/26.8.2/upgrading/)
 
-```powershell
-$env:HRM_DEV_PORTAL_ORIGIN = 'https://<develop Portal 網址>'
-npm.cmd start
-```
-
-開啟 `http://localhost:4201/`，點「登入」。Keycloak 登入完成後會回到本機 HRM。新增員工會寫入 develop 資料庫。
+把管理 client 的 ID 和 secret 設成 Portal 後端的 `HRM_KEYCLOAK_CLIENT_ID` 與 `HRM_KEYCLOAK_CLIENT_SECRET`。本機放 `.env.keycloak`，線上放 Portal 服務的 Railway Variables。

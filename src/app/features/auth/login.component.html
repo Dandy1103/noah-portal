@@ -3,13 +3,13 @@
 
     <main class="login__main u-grid u-px-md">
         <section class="login__content u-grid u-gap-lg" aria-labelledby="login-title">
-            <h1 id="login-title" class="login__title u-text-brand">登入工作台</h1>
+            <h1 id="login-title" class="login__title u-text-brand">{{ signedOut ? '已登出' : '登入未完成' }}</h1>
 
             @if (errorMessage; as error) {
                 <p class="login__error u-text-sm u-text-danger u-rounded u-px-md u-py-sm" role="alert">{{ error }}</p>
             }
             <a class="login__action u-grid u-bg-brand u-text-on-brand u-text-sm u-font-semibold u-rounded"
-                href="/auth/login">使用員工帳號登入</a>
+                [href]="loginUrl">重新登入</a>
         </section>
     </main>
 </div>

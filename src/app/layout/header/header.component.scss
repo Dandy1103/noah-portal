@@ -19,11 +19,12 @@
     text-overflow: ellipsis;
 }
 
-.portal-header__logout {
+.portal-header__action {
     border: 1px solid rgb(255 255 255 / 28%);
     border-radius: var(--radius-sm);
     background: transparent;
     color: inherit;
+    text-decoration: none;
 }
 
 @media (max-width: 440px) {

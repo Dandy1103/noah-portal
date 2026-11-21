@@ -4,7 +4,8 @@
     @if (user(); as currentUser) {
         <form class="u-push-end u-flex u-items-center u-gap-sm u-min-w-0 u-text-sm" action="/auth/logout" method="post">
             <span class="portal-header__name u-nowrap">{{ currentUser.displayName }}</span>
-            <button class="portal-header__logout u-nowrap u-px-sm u-py-sm" type="submit">登出</button>
+            <a class="portal-header__action u-nowrap u-px-sm u-py-sm" href="/auth/change-password">變更密碼</a>
+            <button class="portal-header__action u-nowrap u-px-sm u-py-sm" type="submit">登出</button>
         </form>
     }
 </header>

@@ -21,8 +21,8 @@
         <ul class="dashboard__applications u-list-none u-grid u-gap-sm u-mt-md">
             <li class="u-bg-surface u-border u-rounded u-p-md">
                 <h3 class="u-text-sm u-font-semibold">
-                    @if (user()?.hrmAvailable) {
-                        <a href="/hrm/" class="dashboard__app-link">Noah HRM</a>
+                    @if (user()?.hrmUrl; as hrmUrl) {
+                        <a [href]="hrmUrl" class="dashboard__app-link">Noah HRM</a>
                     } @else {
                         Noah HRM
                     }

@@ -1,11 +1,11 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { catchError, map, of, tap } from 'rxjs';
 
 interface PortalUser {
     displayName: string;
-    hrmAvailable: boolean;
+    hrmUrl: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -16,14 +16,22 @@ export class SessionService {
 
     check() {
         return this.http.get<PortalUser>('/api/session').pipe(
-            catchError(() => of(null)),
             tap((user) => this.signedInUser.set(user))
         );
     }
 }
 
-export const requireSession: CanActivateFn = () => {
+export const requireSession: CanActivateFn = (_route, state) => {
     const session = inject(SessionService);
     const router = inject(Router);
-    return session.check().pipe(map((user) => user ? true : router.createUrlTree(['/login'])));
+    return session.check().pipe(
+        map(() => true),
+        catchError((error: HttpErrorResponse) => {
+            if (error.status === 401) {
+                location.replace('/auth/login?' + new URLSearchParams({ next: state.url }));
+                return of(false);
+            }
+            return of(router.createUrlTree(['/login'], { queryParams: { error: 'unavailable', next: state.url } }));
+        })
+    );
 };

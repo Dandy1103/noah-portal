@@ -7,3 +7,8 @@ CREATE TABLE IF NOT EXISTS employees (
     oidc_subject TEXT NOT NULL CHECK (length(btrim(oidc_subject)) > 0),
     UNIQUE (oidc_issuer, oidc_subject)
 );
+ALTER TABLE employees
+    ADD COLUMN IF NOT EXISTS managed_account BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS first_name TEXT,
+    ADD COLUMN IF NOT EXISTS last_name TEXT,
+    ADD COLUMN IF NOT EXISTS email TEXT;

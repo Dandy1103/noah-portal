@@ -9,7 +9,7 @@ const databaseUrl = (password) => `postgresql://noah_portal:${encodeURIComponent
 
 try {
     const values = parseEnv(readFileSync(example, 'utf8'));
-    for (const name of ['OIDC_CLIENT_SECRET', 'SESSION_SECRET', 'KC_BOOTSTRAP_ADMIN_PASSWORD', 'KEYCLOAK_DEMO_PASSWORD', 'PORTAL_DB_PASSWORD']) {
+    for (const name of ['OIDC_CLIENT_SECRET', 'KC_BOOTSTRAP_ADMIN_PASSWORD', 'KEYCLOAK_DEMO_PASSWORD', 'PORTAL_DB_PASSWORD']) {
         values[name] = randomBytes(32).toString('hex');
     }
     values.DATABASE_URL = databaseUrl(values.PORTAL_DB_PASSWORD);
