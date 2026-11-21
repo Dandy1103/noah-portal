@@ -1,5 +1,33 @@
 # 網站部署手冊
 
+## 通用部署清單
+
+### 1. 選 repo 和分支
+
+在 Railway 新增服務，點 **GitHub Repo**，搜尋你的 repo，找到就點進去。接著打開這個服務的 **Settings → Source → Branch**，選你要部署的分支。 [Railway 分支設定](https://docs.railway.com/deployments/github-autodeploys#configure-the-github-branch-for-deployment-triggers)
+
+### 2. 拿網站網址，設定 Keycloak
+
+到服務的 **Settings → Networking → Public Networking**。用自己的網域就點 **Custom Domain**，填這個網站的完整網域，再到 DNS 把 Railway 顯示的 **CNAME** 和 **TXT** 各加一筆。用 Railway 給的網址就點 **Generate Domain**。 [Railway 網址設定](https://docs.railway.com/networking/domains/working-with-domains)
+
+到 Keycloak 的 **Clients**，幫這個網站建一個 OpenID Connect client。開啟 **Client authentication** 和 **Standard flow**。到 **Valid redirect URIs** 貼上完整的登入回呼網址。像 Portal 這樣用 `/auth/callback` 的專案，就把這段加在網站網址後面。 [Keycloak Client 設定](https://www.keycloak.org/docs/latest/server_admin/#_oidc_clients)
+
+像 Portal 和 HRM 這種程式本來就會送 `S256` 的專案，**PKCE method** 留空也能登入。選 `S256` 可以讓 Keycloak 強制要求它。 [Keycloak PKCE 說明](https://www.keycloak.org/docs/latest/server_admin/#_oidc_clients)
+
+### 3. 填 5 筆設定，再按 Deploy
+
+每個專案都要接資料庫和 Keycloak。回 Railway，點 **服務 → Variables → New Variable**，照表一筆一筆加。如果專案用了不同的欄位名稱，就照該專案 README 填。 [Railway 變數設定](https://docs.railway.com/variables)
+
+| 名稱欄 | 值那欄填什麼 |
+| --- | --- |
+| `APP_ORIGIN` | 上一步拿到的 HTTPS 網址 |
+| `OIDC_ISSUER_URL` | Keycloak realm 的網址。跟 Portal 用同一個 realm，就複製 Portal 服務裡同名的值。 |
+| `OIDC_CLIENT_ID` | 上一步幫這個網站建的 Client ID |
+| `OIDC_CLIENT_SECRET` | 到該 client 的 **Credentials** 複製 Client secret |
+| `DATABASE_URL` | 這個專案要用的資料庫連線網址 |
+
+如果網站還要在 Keycloak 新增、修改或停用帳號，再另外設定管理用的 client。填好後按 **Deploy**。等畫面顯示 **Active**，打開網站，試一次登入和儲存資料。
+
 ## HRM 獨立上線
 
 從 `noah-hrm` 執行 `npm run build` 和 `mvnw.cmd package`，再從專案目錄啟動 `java -jar target/noah-hrm.jar`。Spring Boot 會提供 Angular 網頁、登入和員工 API。
@@ -7,14 +35,6 @@
 HRM 用自己的機密 OIDC client。若 Portal 與 HRM 在同一個 Keycloak realm，員工可沿用 Keycloak 的登入狀態。兩個站點都要登錄自己的 /auth/callback。
 
 在 HRM 服務設定 APP_ORIGIN、OIDC_ISSUER_URL、OIDC_CLIENT_ID、OIDC_CLIENT_SECRET、DATABASE_URL、HRM_ADMIN_SUBJECT、HRM_KEYCLOAK_CLIENT_ID 與 HRM_KEYCLOAK_CLIENT_SECRET。若要沿用同一個 realm 的既有員工資料，DATABASE_URL 指向該環境既有的員工資料庫。 [帳號管理設定](../README.md#帳號管理)
-
-## 下個網站部署流程
-
-1. **確認網站要跑什麼。** 純前端準備 build 指令、產物路徑，以及重新整理內頁時的 SPA 路由設定。有 API 的網站準備啟動指令、環境變數、資料庫與遷移指令。Railway 上的 Web 服務要監聽 `0.0.0.0` 和 `PORT`。Portal 的健康檢查用 `/healthz`，目前只確認前端產物就緒。 [Railway 健康檢查](https://docs.railway.com/deployments/healthchecks)
-2. **推 GitHub，再接 Railway。** 建立服務、選 GitHub repo 和要部署的分支。到 **Settings → Source** 查 repo、分支和自動部署；服務上線後也核對 **Deployments** 顯示的 commit。目前 Portal 的 Railway 環境叫 `production`，接的是 GitHub 的 `develop`。專案要服務正式使用者時，可用獨立測試環境與資料庫，把 `develop` 接測試環境，`main` 接正式環境。 [Railway 服務](https://docs.railway.com/services) · [Railway 環境](https://docs.railway.com/environments)
-3. **先用 Railway 網址測通，再接自有網域。** 在 **Settings → Networking → Public Networking** 產生 Railway 公開網址。需要自有網域時，從 **Custom Domain** 加入子網域，再到 Spaceship 的 **Advanced DNS** 貼上 Railway 顯示的 **CNAME** 和 **TXT** 各自的 Host 和 Value。驗證用 TXT 通常有獨立的 Host，例如 `_railway-verify.noahportal`。同一個 `dandy-cheng.com` 可以分出多個子網域，分別指向各個專案。等 Railway 驗證和 HTTPS 就緒後再測公開網址。 [Railway 網域設定](https://docs.railway.com/networking/domains/working-with-domains)
-4. **補環境變數與資料庫。** 在正確環境的正確服務開 **Variables → New Variable**，儲存後部署變更。密鑰放 Railway Variables，repo 的 `.env.example` 列變數名稱即可。資料庫要先跑遷移，再用測試資料試寫入。 [Railway 變數設定](https://docs.railway.com/variables)
-5. **走一次使用者流程。** 等部署 Active，先開首頁和內頁，再測登入、登出、權限與實際儲存。記下部署成功的 commit。若新版有問題，可從部署紀錄選舊版回滾，並另外檢查資料庫遷移的相容性。 [Railway 部署操作](https://docs.railway.com/deployments/deployment-actions)
 
 ## 需要 SSO 的網站
 
