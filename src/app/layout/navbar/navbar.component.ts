@@ -10,11 +10,11 @@ const SELF_REPO = 'noah-portal';
   styleUrl: './navbar.component.scss',
 })
 export class NavbarComponent implements AfterViewInit {
-  currentLabel = '入口';
+  currentLabel = '';
   readonly opened = signal<string | null>(null);
   readonly moreOpen = signal(false);
   readonly visibleCount = signal(20);
-  groups: NavGroup[] = fallbackGroups(SELF_REPO);
+  groups: NavGroup[] = [];
   private observer?: ResizeObserver;
   private readonly zone = inject(NgZone);
 
@@ -29,7 +29,12 @@ export class NavbarComponent implements AfterViewInit {
       this.observer?.disconnect();
     });
     void loadCatalog(controller.signal).then((catalog) => {
-      if (!catalog) return;
+      if (!catalog) {
+        this.groups = fallbackGroups(SELF_REPO);
+        this.currentLabel = '入口';
+        requestAnimationFrame(() => this.measure());
+        return;
+      }
       this.groups = applyNav(catalog, SELF_REPO);
       const mine = catalog.groups.find((group) => group.app === SELF_REPO);
       const named = catalog.systems.find((system) => system.repo === mine?.app);
