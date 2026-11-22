@@ -7,6 +7,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Locale;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,7 +111,7 @@ final class PortalController {
 
     @PostMapping("/auth/logout")
     ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
-        requireOrigin(request, settings.originValue());
+        requireLogoutOrigin(request);
         String refreshToken = identity.logoutToken(request);
         if (request.getSession(false) != null) endSession(request, response);
         try {
@@ -121,7 +122,7 @@ final class PortalController {
         return ResponseEntity.status(HttpStatus.SEE_OTHER).location(URI.create("/auth/login?reauth=true")).build();
     }
 
-    @GetMapping({"/", "/index.html", "/login"})
+    @GetMapping({"/", "/index.html", "/login", "/profile", "/permissions"})
     ResponseEntity<?> portal(HttpServletRequest request, HttpServletResponse response) {
         boolean isLogin = request.getServletPath().equals("/login");
         var user = activeUser(request, response);
@@ -270,6 +271,33 @@ final class PortalController {
 
     private static void requireOrigin(HttpServletRequest request, String expected) {
         if (!expected.equals(request.getHeader("Origin"))) throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    }
+
+    private void requireLogoutOrigin(HttpServletRequest request) {
+        String origin = request.getHeader("Origin");
+        if (settings.originValue().equals(origin) || siblingOrigin(origin)) return;
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    }
+
+    private boolean siblingOrigin(String origin) {
+        if (origin == null || origin.isBlank()) return false;
+        URI uri;
+        try {
+            uri = URI.create(origin);
+        } catch (IllegalArgumentException error) {
+            return false;
+        }
+        String host = uri.getHost();
+        if (host == null || uri.getRawUserInfo() != null || uri.getRawQuery() != null
+                || uri.getRawFragment() != null || (uri.getPath() != null && !uri.getPath().isEmpty())) {
+            return false;
+        }
+        if ("localhost".equalsIgnoreCase(settings.origin.getHost())) {
+            return "http".equalsIgnoreCase(uri.getScheme())
+                    && ("localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host));
+        }
+        return "https".equalsIgnoreCase(uri.getScheme())
+                && host.toLowerCase(Locale.ROOT).endsWith(".dandy-cheng.com");
     }
 
     private static ResponseEntity<?> index(Path directory) {

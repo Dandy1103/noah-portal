@@ -1,0 +1,21 @@
+<section class="account-page" aria-labelledby="profile-title">
+  <h1 id="profile-title">個人資料</h1>
+  @if (state(); as current) {
+    @if (current.status === 'ready') {
+      <dl>
+        @for (row of rows(current.profile); track row.label) {
+          <div>
+            <dt>{{ row.label }}</dt>
+            <dd>{{ row.value }}</dd>
+          </div>
+        }
+      </dl>
+    } @else if (current.status === 'missing') {
+      <p>找不到你的員工資料。</p>
+    } @else if (current.status === 'failed') {
+      <p>個人資料載入失敗，請重新整理。</p>
+    } @else {
+      <p>載入中</p>
+    }
+  }
+</section>

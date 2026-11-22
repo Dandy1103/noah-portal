@@ -11,6 +11,7 @@ import org.springframework.boot.web.servlet.server.AbstractServletWebServerFacto
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -64,6 +65,17 @@ public class PortalApplication {
     @Bean
     WebMvcConfigurer assets(PortalSettings settings) {
         return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                var origins = new String[] {
+                        "http://localhost:*",
+                        "http://127.0.0.1:*",
+                        "https://*.dandy-cheng.com"
+                };
+                registry.addMapping("/api/session").allowedOriginPatterns(origins).allowedMethods("GET").allowCredentials(true);
+                registry.addMapping("/api/me/employee").allowedOriginPatterns(origins).allowedMethods("GET").allowCredentials(true);
+            }
+
             @Override
             public void addResourceHandlers(ResourceHandlerRegistry registry) {
                 registry.addResourceHandler("/**")
