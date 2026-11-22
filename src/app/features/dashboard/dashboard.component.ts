@@ -4,6 +4,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { SessionService } from '../auth/session.service';
+import { appHref, loadCatalog, type CatalogSystem } from '../../layout/navbar/nav-catalog';
 
 interface EmployeeProfile {
   employeeNumber: string;
@@ -88,6 +89,7 @@ const CHECK_IN_KEY = 'noah-portal-check-in';
 export class DashboardComponent {
   private readonly destroyRef = inject(DestroyRef);
   readonly user = inject(SessionService).user;
+  private readonly catalogSystems = signal<CatalogSystem[] | null>(null);
 
   readonly employee = toSignal(
     inject(HttpClient).get<EmployeeProfile>('/api/me/employee').pipe(
@@ -260,7 +262,7 @@ export class DashboardComponent {
   });
 
   readonly services = computed((): ServiceTile[] => {
-    const hrmUrl = this.user()?.hrmUrl || null;
+    const hrmUrl = appHref('noah-hrm', '', this.catalogSystems());
     return [
       { label: 'HRM', icon: 'hrm', href: hrmUrl },
       { label: 'CRM', icon: 'crm', href: null },
@@ -276,7 +278,14 @@ export class DashboardComponent {
 
   constructor() {
     const timer = window.setInterval(() => this.clock.set(new Date()), 30_000);
-    this.destroyRef.onDestroy(() => window.clearInterval(timer));
+    const controller = new AbortController();
+    this.destroyRef.onDestroy(() => {
+      window.clearInterval(timer);
+      controller.abort();
+    });
+    void loadCatalog(controller.signal).then((catalog) => {
+      if (catalog) this.catalogSystems.set(catalog.systems);
+    });
   }
 
   get displayName(): string {

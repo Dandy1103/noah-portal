@@ -63,7 +63,22 @@ export function loadCatalog(signal: AbortSignal): Promise<NavCatalog | null> {
     .catch(() => null);
 }
 
-export function applyNav(catalog: NavCatalog, self: string, hrmUrl: string): NavGroup[] {
+const HRM_BACKUP: CatalogSystem = {
+  repo: 'noah-hrm',
+  url: 'https://noahhrm.dandy-cheng.com/',
+  online: true,
+};
+
+export function appHref(repo: string, path: string, systems: CatalogSystem[] | null): string | null {
+  const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+  if (local && LOCAL_ORIGINS[repo]) return new URL(path, LOCAL_ORIGINS[repo]).toString();
+  const list = systems ?? (repo === 'noah-hrm' ? [HRM_BACKUP] : []);
+  const system = list.find((item) => item.repo === repo);
+  if (!system || system.online !== true || !system.url) return null;
+  return joinUrl(path, system.url);
+}
+
+export function applyNav(catalog: NavCatalog, self: string): NavGroup[] {
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
   const systems = new Map<string, CatalogSystem>();
   for (const system of catalog.systems) {
@@ -79,7 +94,7 @@ export function applyNav(catalog: NavCatalog, self: string, hrmUrl: string): Nav
       const links: NavLink[] = [];
       for (const link of section.links) {
         if (!link || typeof link.label !== 'string') continue;
-        links.push({ label: link.label, href: hrefFor(link, systems, self, hrmUrl, local) });
+        links.push({ label: link.label, href: hrefFor(link, systems, self, local) });
       }
       sections.push({ title: section.title, links });
     }
@@ -94,24 +109,21 @@ function hrefFor(
   link: CatalogLink,
   systems: Map<string, CatalogSystem>,
   self: string,
-  hrmUrl: string,
   local: boolean,
 ): string | null {
   const app = typeof link.app === 'string' ? link.app : '';
   const path = typeof link.path === 'string' ? link.path : '';
   if (!app) return null;
   if (app === self) return new URL(path, document.baseURI).pathname;
-  if (app === 'noah-hrm' && hrmUrl) return hrmHref(path, hrmUrl);
   if (local && LOCAL_ORIGINS[app]) return new URL(path, LOCAL_ORIGINS[app]).toString();
   const system = systems.get(app);
   if (!system || system.online !== true || !system.url) return null;
-  const base = system.url.endsWith('/') ? system.url : `${system.url}/`;
-  return new URL(path, base).toString();
+  return joinUrl(path, system.url);
 }
 
-function hrmHref(path: string, hrmUrl: string): string | null {
+function joinUrl(path: string, base: string): string | null {
   try {
-    const root = new URL(hrmUrl, location.origin);
+    const root = new URL(base, location.origin);
     const folder = root.pathname.endsWith('/') ? root.pathname : `${root.pathname}/`;
     return new URL(path, `${root.origin}${folder}`).toString();
   } catch {

@@ -1,6 +1,5 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
-import { SessionService } from '../../features/auth/session.service';
-import { applyNav, loadCatalog, NavGroup } from './nav-catalog';
+import { appHref, applyNav, loadCatalog, NavGroup } from './nav-catalog';
 
 @Component({
   selector: 'app-navbar',
@@ -9,13 +8,12 @@ import { applyNav, loadCatalog, NavGroup } from './nav-catalog';
   styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent {
-  private readonly user = inject(SessionService).user;
   private readonly remote = signal<Awaited<ReturnType<typeof loadCatalog>>>(null);
   readonly opened = signal<string | null>(null);
   readonly groups = computed(() => {
     const catalog = this.remote();
     if (!catalog) return this.localGroups();
-    return applyNav(catalog, 'noah-portal', this.user()?.hrmUrl || '');
+    return applyNav(catalog, 'noah-portal');
   });
 
   constructor() {
@@ -27,13 +25,7 @@ export class NavbarComponent {
   }
 
   private readonly localGroups = computed((): NavGroup[] => {
-    const hrmUrl = this.user()?.hrmUrl || '';
-    const hrm = (section: string): string | null => {
-      if (!hrmUrl) return null;
-      const root = new URL(hrmUrl, location.origin);
-      const folder = root.pathname.endsWith('/') ? root.pathname : `${root.pathname}/`;
-      return new URL(section, `${root.origin}${folder}`).toString();
-    };
+    const hrm = (section: string): string | null => appHref('noah-hrm', section, null);
     return [
       {
         label: '公告',
