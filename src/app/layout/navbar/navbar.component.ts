@@ -1,20 +1,6 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { SessionService } from '../../features/auth/session.service';
-
-interface NavLink {
-  label: string;
-  href: string | null;
-}
-
-interface NavSection {
-  title: string;
-  links: NavLink[];
-}
-
-interface NavGroup {
-  label: string;
-  sections: NavSection[];
-}
+import { applyNav, loadCatalog, NavGroup } from './nav-catalog';
 
 @Component({
   selector: 'app-navbar',
@@ -24,9 +10,23 @@ interface NavGroup {
 })
 export class NavbarComponent {
   private readonly user = inject(SessionService).user;
+  private readonly remote = signal<Awaited<ReturnType<typeof loadCatalog>>>(null);
   readonly opened = signal<string | null>(null);
+  readonly groups = computed(() => {
+    const catalog = this.remote();
+    if (!catalog) return this.localGroups();
+    return applyNav(catalog, 'noah-portal', this.user()?.hrmUrl || '');
+  });
 
-  readonly groups = computed((): NavGroup[] => {
+  constructor() {
+    const controller = new AbortController();
+    inject(DestroyRef).onDestroy(() => controller.abort());
+    void loadCatalog(controller.signal).then((catalog) => {
+      if (catalog) this.remote.set(catalog);
+    });
+  }
+
+  private readonly localGroups = computed((): NavGroup[] => {
     const hrmUrl = this.user()?.hrmUrl || '';
     const hrm = (section: string): string | null => {
       if (!hrmUrl) return null;
@@ -80,6 +80,14 @@ export class NavbarComponent {
           ] },
           { title: '權限', links: [
             { label: '權限設定', href: null },
+          ] },
+        ],
+      },
+      {
+        label: '應用管理',
+        sections: [
+          { title: '應用', links: [
+            { label: '系統清單', href: null },
           ] },
         ],
       },
