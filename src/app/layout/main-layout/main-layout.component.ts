@@ -3,7 +3,7 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { HeaderComponent } from '../header/header.component';
-import { SidebarComponent } from '../sidebar/sidebar.component';
+import { NavbarComponent } from '../navbar/navbar.component';
 
 @Component({
   selector: 'noah-main-layout',
@@ -11,7 +11,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
   imports: [
     RouterOutlet,
     HeaderComponent,
-    SidebarComponent
+    NavbarComponent
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss'

@@ -1,13 +1,28 @@
-<header class="portal-header u-flex u-items-center u-gap-md u-px-md u-bg-brand u-text-on-brand">
-    <a class="portal-header__home" routerLink="/" aria-label="回 Noah Portal 首頁">
-        <img class="portal-header__logo" src="assets/images/logo.png" width="360" height="120" alt="諾亞數智">
+<header class="site-header">
+    <a class="site-header__home" [href]="homeHref" aria-label="回首頁">
+        <img class="site-header__logo" src="assets/images/logo.png" width="360" height="120" alt="諾亞數智">
     </a>
-    <span class="portal-header__product u-nowrap u-text-sm u-font-semibold">Noah Portal</span>
-    @if (user(); as currentUser) {
-        <form class="portal-header__actions u-push-end u-flex u-items-center u-gap-sm u-min-w-0 u-text-sm" action="/auth/logout" method="post">
-            <span class="portal-header__name u-nowrap">{{ currentUser.displayName }}</span>
-            <a class="portal-header__action u-nowrap u-px-sm u-py-sm" href="/auth/change-password">變更密碼</a>
-            <button class="portal-header__action u-nowrap u-px-sm u-py-sm" type="submit">登出</button>
-        </form>
-    }
+    <span class="site-header__product">Noah Portal</span>
+    <div class="site-header__actions">
+        @if (user(); as current) {
+            <div class="site-header__account" #account>
+                <button type="button"
+                    class="site-header__name"
+                    aria-haspopup="menu"
+                    [attr.aria-expanded]="isMenuOpen"
+                    (click)="toggleMenu()">
+                    <span class="site-header__name-text">{{ employeeName()?.displayName || current.displayName }}</span>
+                    <span class="site-header__caret" aria-hidden="true"></span>
+                </button>
+                @if (isMenuOpen) {
+                    <div class="site-header__menu" role="menu">
+                        <a class="site-header__menu-item" role="menuitem" [href]="passwordHref" (click)="closeMenu()">變更密碼</a>
+                    </div>
+                }
+            </div>
+            <form class="site-header__logout" action="/auth/logout" method="post">
+                <button class="site-header__logout-button" type="submit">登出</button>
+            </form>
+        }
+    </div>
 </header>

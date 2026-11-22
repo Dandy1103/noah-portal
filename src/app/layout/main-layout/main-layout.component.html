@@ -1,11 +1,8 @@
-<div class="portal-layout u-grid">
-    <noah-header></noah-header>
+<div class="portal-layout">
+    <app-header></app-header>
+    <app-navbar></app-navbar>
 
-    <div class="portal-layout__body u-grid">
-        <noah-sidebar class="u-min-w-0 u-bg-surface"></noah-sidebar>
-
-        <main class="portal-layout__content u-min-w-0">
-            <router-outlet />
-        </main>
-    </div>
+    <main class="portal-layout__content">
+        <router-outlet />
+    </main>
 </div>

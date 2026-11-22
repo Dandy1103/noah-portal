@@ -217,7 +217,7 @@ ng test
 
 ## 10. Keycloak 單一登入
 
-新網站部署、HRM 上線與常見錯誤請看 [網站部署手冊](docs/DEPLOYMENT.md)。
+新網站部署、HRM 上線與常見錯誤請看 [網站部署手冊](docs/DEPLOYMENT.md)。安裝 UI 套件的 GitHub 金鑰看 [GitHub Packages 金鑰](docs/github-packages.md)。
 
 ### 本機驗證
 

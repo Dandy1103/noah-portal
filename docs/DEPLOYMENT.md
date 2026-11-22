@@ -1,5 +1,7 @@
 # 網站部署手冊
 
+安裝 `@dandy1103/ui` 的 GitHub 金鑰看 [GitHub Packages 金鑰](github-packages.md)。金鑰寫在 Windows 使用者環境變數，不要寫進 Git。
+
 ## 通用部署清單
 
 ### 1. 選 repo 和分支

@@ -1,10 +1,12 @@
 .u-flex { display: flex; }
+.u-shrink-0 { flex-shrink: 0; }
 .u-grid { display: grid; }
 .u-items-center { align-items: center; }
 .u-items-baseline { align-items: baseline; }
 .u-justify-between { justify-content: space-between; }
 .u-flex-wrap { flex-wrap: wrap; }
 .u-push-end { margin-inline-start: auto; }
+.u-ml-auto { margin-left: auto; }
 .u-min-w-0 { min-width: 0; }
 .u-nowrap { white-space: nowrap; }
 
@@ -23,6 +25,8 @@
 .u-p-md { padding: var(--spacing-md); }
 .u-px-sm { padding-inline: var(--spacing-sm); }
 .u-px-md { padding-inline: var(--spacing-md); }
+.u-pl-md { padding-left: var(--spacing-md); }
+.u-pr-md { padding-right: var(--spacing-md); }
 .u-py-sm { padding-block: var(--spacing-sm); }
 .u-py-md { padding-block: var(--spacing-md); }
 
@@ -30,6 +34,7 @@
 .u-bg-surface { background-color: var(--color-surface); }
 .u-bg-selected { background-color: var(--color-surface-selected); }
 .u-text-on-brand { color: var(--color-surface); }
+.u-text-white { color: #ffffff; }
 .u-text-brand { color: var(--color-primary); }
 .u-text-secondary { color: var(--color-text-secondary); }
 .u-text-danger { color: var(--color-danger); }
