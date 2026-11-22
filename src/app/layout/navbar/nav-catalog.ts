@@ -50,7 +50,9 @@ const LOCAL_ORIGINS: Record<string, string> = {
 
 export function catalogUrl(): string {
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
-  return local ? 'http://localhost:3002/api/apps/catalog' : '/api/apps/catalog';
+  return local
+    ? 'http://localhost:3002/api/apps/catalog'
+    : 'https://noahapps.dandy-cheng.com/api/apps/catalog';
 }
 
 export function loadCatalog(signal: AbortSignal): Promise<NavCatalog | null> {
