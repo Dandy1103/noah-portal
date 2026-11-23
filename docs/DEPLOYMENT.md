@@ -57,56 +57,81 @@ Portal 的登入 session 由 Spring Boot 管理。
 
 若要另開 Cloud-IAM 展示環境，可選 Freemium。部署完成後，Keycloak 管理介面首次登入用部署完成信裡提供的帳密。免費方案使用 Cloud-IAM 提供的網域，登入頁沿用供應商主題。 [Cloud-IAM 開通教學](https://documentation.cloud-iam.com/get-started/complete-tutorial.html) · [主題方案限制](https://documentation.cloud-iam.com/faq/customization.html)
 
-## 本機 HRM
+## 本機登入（跟線上同一套 Cloud-IAM）
 
-在 `noah-hrm` 執行 `npm start`，開啟 [HRM](http://localhost:4201/)。它會和 Portal 共用本機 Keycloak 及員工資料庫。要接線上測試環境時，依 `.env.local.example` 填寫 Keycloak 和 PostgreSQL 設定。
+為什麼不走本機 `8081`：Cloud-IAM 免費方案改不了登入頁主題，本機若另起 Keycloak 會變成兩套登入體驗。所以本機、正式都打同一個 realm：
 
-## 本機開發 port 和登入回呼
+`https://lemur-7.cloud-iam.com/auth/realms/noah-identity`
 
-Windows 新電腦先裝 Node.js 20.12 以上、Git 和 Docker Desktop。Portal 和 HRM 都在各自的專案目錄執行 `npm start`。
+管理台：[noah-identity console](https://lemur-7.cloud-iam.com/auth/admin/noah-identity/console/)
 
-| Port | 用途 |
-| --- | --- |
-| `4200` | Portal 的 Angular 前端 |
-| `4201` | HRM 的 Angular 前端 |
-| `3000` | 本機 Portal 後端，處理 `/auth` 和 `/api` |
-| `3001` | 本機 HRM 後端，處理 `/auth` 和 `/api` |
-| `8081` | Portal 與 HRM 共用的本機 Keycloak |
-| `5433` | Portal 與 HRM 共用的本機 PostgreSQL |
-| `4202`、`4203` | 下個專案可以使用的例子，實際選一個未被占用的 port |
+### 一次性：在 Cloud-IAM 放行本機回呼
 
-### 讓 Portal 在 4200 登入
+| Client | Valid redirect URIs 至少要有 | Web origins 建議加 |
+| --- | --- | --- |
+| `noah-portal` | `http://localhost:4200/auth/callback` | `http://localhost:4200` |
+| `noah-hrm` | `http://localhost:4201/auth/callback` | `http://localhost:4201` |
 
-`npm start` 會啟動 Portal 的前端和後端。`/auth` 和 `/api` 會由 `proxy.conf.json` 轉發到 `127.0.0.1:3000`。登入回 500 時，先確認後端有在跑，再確認後端能連到 Keycloak。
+正式網址也一起留著：`https://noahportal.dandy-cheng.com/auth/callback`、`https://noahhrm.dandy-cheng.com/auth/callback`。
 
-從 `noah-portal` 開 PowerShell，先啟動專案的 Docker Compose，再啟動後端。這段指令假設本機已有 `.env.keycloak`，初次建立可照 [README 本機驗證](../README.md#本機驗證)。
+漏加本機回呼時，畫面會是 **Invalid parameter: redirect_uri**。
 
-```powershell
-docker compose --env-file .env.keycloak -f keycloak/compose.yaml up -d --build
-$env:APP_ORIGIN = 'http://localhost:4200'
-.\mvnw.cmd spring-boot:run
-```
+### 每個專案寫 `.env.local`
 
-保留這個視窗，在另一個視窗執行 `npm.cmd run ng -- serve` 啟動前端。開啟 [本機 Portal](http://localhost:4200/) 測試登入。Keycloak 的 Portal client 要允許 `http://localhost:4200/auth/callback`。專案的本機 realm 範本已包含這筆回呼，已建立的 realm 請到 Keycloak 管理介面核對。 [Keycloak Client 設定](https://www.keycloak.org/docs/latest/server_admin/#_oidc_clients)
-
-### 給新專案選 port
-
-新 Angular 專案如果保留預設的 `"start": "ng serve"`，臨時換 port 可以在它自己的 repo 執行下面任一行。要讓團隊每次都使用同一個 port，可把 `--port 4202` 寫入該 repo 的 `package.json` 啟動指令。 [Angular ng serve](https://angular.dev/cli/serve)
+**Portal**
 
 ```cmd
-npm.cmd start -- --port 4202
-npm.cmd start -- --port 4203
+cd noah-portal
+copy .env.local.example .env.local
 ```
 
-新專案要接 SSO 時，核對下面三處：
+打開 `.env.local` 填：
 
-1. **前端網址**用你選的 port。沿用 Portal 這種前後端架構時，後端的 `APP_ORIGIN` 要填瀏覽器實際開的網址，例如 `http://localhost:4202`。
-2. **代理設定**的目標填後端真正監聽的 port。只改前端 port 時，Portal 的代理仍可指向 `3000`。
-3. **Keycloak 回呼**填該應用實際的完整 callback。若新專案的路徑是 `/auth/callback`，就填 `http://localhost:4202/auth/callback`。 [Keycloak 回呼設定](https://www.keycloak.org/docs/latest/server_admin/#_oidc_clients)
+| 欄位 | 去哪拿 |
+| --- | --- |
+| `OIDC_CLIENT_SECRET` | Cloud-IAM → Clients → `noah-portal` → Credentials |
+| `DATABASE_URL` | 本機 Postgres 用 `.env.shared-keycloak` 那串；或貼 Railway／共用庫連線 |
+| `HRM_ADMIN_SUBJECT` | （可選）管理員在 Cloud-IAM 的 User ID |
+| `HRM_KEYCLOAK_CLIENT_SECRET` | （帳號管理才要）Clients → `noah-hrm-management` → Credentials |
 
-在 PowerShell 設定 `$env:HRM_PORT = "4202"` 再啟動 HRM，就能換前端 port。使用預設的本機 Keycloak 時會自動登錄回呼。使用線上測試環境時，需在 HRM client 加上 `http://localhost:4202/auth/callback`。
+`OIDC_ISSUER_URL`、`OIDC_CLIENT_ID` 範本已寫好，通常不用改。
 
-多個本機專案各自管理登入 session 時，給每個專案不同的 session cookie 名稱，避免互相覆蓋。同一個 `localhost` 的 cookie 會跨 port 共用。 [HTTP cookie 規格](https://www.rfc-editor.org/rfc/rfc6265.html#section-8.5)
+**HRM** 同理：複製 `noah-hrm/.env.local.example`，client 改拿 `noah-hrm` 的 secret。
+
+有 `.env.local` 且裡面有 `OIDC_ISSUER_URL` 時，`npm start` **不會**再起本機 `8081`。改完 `.env.local` 一定要重跑 `npm start`。
+
+### 日常啟動
+
+```cmd
+cd noah-portal
+npm start
+```
+
+瀏覽器開 `http://localhost:4200/`，應跳到 `lemur-7.cloud-iam.com`，不是 `localhost:8081`。
+
+```cmd
+cd noah-hrm
+npm start
+```
+
+開 `http://localhost:4201/`。兩邊同一個 Cloud-IAM realm，登過一邊通常不用再打一次密碼。
+
+### Port 速查
+
+| Port | 誰 |
+| --- | --- |
+| `4200` | Portal 前端 |
+| `4201` | HRM 前端 |
+| `3000` | Portal 後端（`/auth`、`/api`） |
+| `3001` | HRM 後端 |
+| `5433` | 本機 Postgres（有起 Docker 時） |
+| `8081` | 本機 Keycloak 備援（只有**沒有** `.env.local` 才會用） |
+
+換 HRM 前端 port：`$env:HRM_PORT = "4202"` 再 `npm start`，並在 Cloud-IAM 的 `noah-hrm` client 加上對應 callback。
+
+新站接 SSO：自建 client、Standard flow、放 secret、`Valid redirect URIs` 填實際 callback、`APP_ORIGIN` 填瀏覽器開的網址。
+
+真的要暫時用本機 Keycloak：刪掉或改名 `.env.local` 再 `npm start`（僅備援）。
 
 ## 遇到問題先查哪裡
 
@@ -116,10 +141,11 @@ npm.cmd start -- --port 4203
 | Railway 選不到 repo | 去 GitHub **Settings → Applications → Installed GitHub Apps**，確認 Railway App 已安裝且有權存取該 repo。 [GitHub App 存取設定](https://docs.github.com/en/apps/using-github-apps/reviewing-and-modifying-installed-github-apps) |
 | Push 後沒有新部署 | 到 Railway **Settings → Source** 核對環境、repo、分支與自動部署狀態，再查 **Deployments**。 |
 | Spaceship 提示 TXT 和 CNAME 衝突 | 回 Railway 的 **Show DNS records**，把驗證 TXT 的專用 Host 和驗證值一起複製。CNAME 則使用網站子網域的 Host。 |
-| HRM 本機登入回 500 | 查 HRM 後端 `3001` 和 Keycloak `8081` 是否已啟動。使用線上測試環境時，核對 `.env.local` 的 OIDC 設定。 |
-| Portal 的 `4200` 打得開，登入回 500 | 確認本機 Portal 後端 `3000` 和本機 Keycloak `8081` 都在跑，再查 `APP_ORIGIN` 和 `4200` 的回呼設定。 |
-| 部署 Active，但登入顯示 `unavailable` | 查 `OIDC_ISSUER_URL`、`OIDC_CLIENT_ID`、`OIDC_CLIENT_SECRET`，並確認 Keycloak 的公開 OpenID 設定能連線。Spring Boot 的 **Deploy Logs** 會記錄失敗的階段。 |
-| Keycloak 顯示 `Invalid parameter: redirect_uri` | 到該 client 的 **Valid redirect URIs** 核對完整網址，包含協定、網域或 localhost port，以及回呼路徑。 |
+| HRM 本機登入回 500 | 查 `3001` 有沒有起來；`.env.local` 的 issuer／secret／`DATABASE_URL` 對不對。 |
+| Portal `4200` 登入回 500 | 查 `3000` 有沒有起來；`.env.local` 有沒有被讀到（改完要重啟）；Cloud-IAM 能不能連。 |
+| 還跳到 `localhost:8081` | 專案根目錄沒有有效的 `.env.local`（或缺 `OIDC_ISSUER_URL`）。 |
+| `Invalid parameter: redirect_uri` | Cloud-IAM 該 client 的 **Valid redirect URIs** 缺本機 callback，例如 `http://localhost:4200/auth/callback`。 |
+| 部署 Active，但登入 `unavailable` | 查 Railway 的 `OIDC_ISSUER_URL`、`OIDC_CLIENT_ID`、`OIDC_CLIENT_SECRET`；看 Deploy Logs。 |
 | HRM 顯示「請用有新增員工權限的帳號登入」 | 登入已完成，查 Railway 的 `HRM_ADMIN_SUBJECT` 是否等於目前登入帳號在當前 realm 的 **User ID**。 |
 | HRM 能開表單，但儲存失敗 | 確認 HRM 的 `DATABASE_URL`、資料表遷移、Keycloak 管理 client 的 ID、secret 和 `manage-users` 權限。若提示已使用，再查員工編號或電子郵件是否重複。 |
 

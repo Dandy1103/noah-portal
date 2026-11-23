@@ -221,39 +221,23 @@ ng test
 
 ### 本機驗證
 
-#### Windows 一鍵啟動
+本機跟線上同一套登入（Cloud-IAM `noah-identity`）。步驟、回呼網址、`.env.local` 填法看 [網站部署手冊 → 本機登入](docs/DEPLOYMENT.md#本機登入跟線上同一套-cloud-iam)。
 
-新電腦準備 Node.js 20.12 以上、Git 和 Docker Desktop。開啟 Docker Desktop 後，在 `noah-portal` 根目錄執行：
+準備 Node.js 20.12+、Git、Docker Desktop（本機資料庫才要）、JDK 21。Portal：
+
+```cmd
+copy .env.local.example .env.local
+```
+
+填好 secret 與 `DATABASE_URL` 後：
 
 ```cmd
 npm start
 ```
 
-指令會準備本機設定、Keycloak、PostgreSQL、JDK 21 和 Maven，並啟動 Portal 的 Angular 與 API。看到啟動完成後開 [本機 Portal](http://localhost:4200/)，未登入時會直接前往 Keycloak。
+開 [本機 Portal](http://localhost:4200/)，應導向 Cloud-IAM，不是 `localhost:8081`。HRM 同樣用自己的 `.env.local` 後 `npm start`（[4201](http://localhost:4201/)）。
 
-在 `noah-hrm` 執行 `npm start`，開啟 [本機 HRM](http://localhost:4201/)。
-
-本機 Portal 首頁的「Noah HRM」預設連到 `http://localhost:4201/`。HRM 換 port 或獨立部署後，在 Portal 設定 `HRM_URL` 為 HRM 的網址。
-
-兩個專案共用本機 Keycloak 與員工資料庫。測試登入字號為 `H247386514`（測試專用），初始密碼在 `.env.shared-keycloak` 的 `KEYCLOAK_DEMO_PASSWORD`。登入後點「變更密碼」，新密碼可登入兩邊。按 `Ctrl+C` 會停止目前專案的前端和後端，Docker 裡的 Keycloak 和 PostgreSQL 會留在背景。
-
-第一次使用新的員工資料庫時，先在 `noah-hrm` 執行 `npm run db:migrate` 或啟動 HRM，再啟動 Portal。
-
-#### 手動啟動
-
-先準備 JDK 21、Node.js 和 Docker Desktop。在專案根目錄執行：
-
-```powershell
-node keycloak/create-local-env.mjs
-docker compose --env-file .env.keycloak -f keycloak/compose.yaml up -d --no-recreate
-npm.cmd ci
-npm.cmd run build
-.\mvnw.cmd spring-boot:run
-```
-
-開啟 `http://localhost:3000/`，瀏覽器會前往 Keycloak。測試登入字號為 `H247386514`。若跑過 `npm start`，初始員工密碼與 Keycloak 管理員密碼可在 `.env.shared-keycloak` 分別查看 `KEYCLOAK_DEMO_PASSWORD` 和 `KC_BOOTSTRAP_ADMIN_PASSWORD`。管理員帳號是 `admin`，管理介面在 `http://localhost:8081/admin/`。
-
-若要分開啟動，先設定 `$env:APP_ORIGIN = 'http://localhost:4200'` 再啟動 Spring Boot，接著在另一個視窗執行 `npm run ng -- serve` 啟動 Angular。Angular 會將 `/auth` 和 `/api` 轉發至後端。Spring Boot 會讀取專案根目錄的 `.env.keycloak`，終端機的同名變數優先。
+第一次用新資料庫：先在 `noah-hrm` 跑 `npm run db:migrate`（或先開 HRM），再開 Portal。
 
 ### Railway 設定
 
