@@ -21,17 +21,17 @@ export class SessionService {
     }
 }
 
-export const requireSession: CanActivateFn = (_route, state) => {
+export const requireSession: CanActivateFn = () => {
     const session = inject(SessionService);
     const router = inject(Router);
     return session.check().pipe(
         map(() => true),
         catchError((error: HttpErrorResponse) => {
             if (error.status === 401) {
-                location.replace('/auth/login?' + new URLSearchParams({ next: state.url }));
+                location.replace('/auth/login?' + new URLSearchParams({ next: location.pathname + location.search }));
                 return of(false);
             }
-            return of(router.createUrlTree(['/login'], { queryParams: { error: 'unavailable', next: state.url } }));
+            return of(router.createUrlTree(['/login'], { queryParams: { error: 'unavailable', next: location.pathname + location.search } }));
         })
     );
 };
