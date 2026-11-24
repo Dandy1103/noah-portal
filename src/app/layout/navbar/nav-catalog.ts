@@ -99,30 +99,36 @@ export function fallbackGroups(self: string): NavGroup[] {
 }
 
 let catalogRequest: Promise<NavCatalog | null> | null = null;
+let catalogResult: NavCatalog | null | undefined;
+
+export function loadedCatalog(): NavCatalog | null | undefined {
+  return catalogResult;
+}
 
 export function loadCatalog(signal?: AbortSignal): Promise<NavCatalog | null> {
-  if (signal?.aborted) return Promise.resolve(null);
+  if (signal?.aborted) return Promise.resolve(catalogResult ?? null);
   if (!catalogRequest) {
     catalogRequest = fetch(catalogUrl())
       .then(async (response) => {
-        if (!response.ok) {
-          catalogRequest = null;
-          return null;
-        }
+        if (!response.ok) return null;
         const body: unknown = await response.json();
-        if (!isNavCatalog(body)) {
-          catalogRequest = null;
-          return null;
-        }
-        return body;
+        return isNavCatalog(body) ? body : null;
+      })
+      .then((catalog) => {
+        catalogResult = catalog;
+        return catalog;
       })
       .catch(() => {
-        catalogRequest = null;
+        catalogResult = null;
         return null;
       });
   }
   return catalogRequest;
 }
+
+
+
+
 
 export function applyNav(catalog: NavCatalog, self: string): NavGroup[] {
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);

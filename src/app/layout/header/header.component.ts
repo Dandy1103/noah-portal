@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NoahHeaderAction, NoahHeaderComponent } from '@dandy1103/ui';
 import { catchError, of } from 'rxjs';
 import { SessionService } from '../../features/auth/session.service';
-import { loadCatalog, NavCatalog, portalEntry } from '../navbar/nav-catalog';
+import { loadCatalog, loadedCatalog, NavCatalog, portalEntry } from '../navbar/nav-catalog';
 
 @Component({
   selector: 'app-header',
@@ -13,7 +13,7 @@ import { loadCatalog, NavCatalog, portalEntry } from '../navbar/nav-catalog';
   templateUrl: './header.component.html',
 })
 export class HeaderComponent {
-  private readonly catalog = signal<NavCatalog | null>(null);
+  private readonly catalog = signal<NavCatalog | null>(loadedCatalog() ?? null);
   private readonly http = inject(HttpClient);
   private readonly user = inject(SessionService).user;
   private readonly employeeName = toSignal(

@@ -1,8 +1,12 @@
-<div class="portal-layout">
+@if (shellReady()) {
+  <div class="portal-layout">
     <app-header></app-header>
     <app-navbar></app-navbar>
 
     <main class="portal-layout__content">
-        <router-outlet />
+      <router-outlet />
     </main>
-</div>
+  </div>
+} @else {
+  <noah-loading-mask />
+}
