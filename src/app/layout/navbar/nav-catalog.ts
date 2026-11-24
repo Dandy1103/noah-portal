@@ -2,7 +2,6 @@ export interface CatalogSystem {
   repo: string;
   name?: string;
   url: string;
-  localUrl?: string;
   online: boolean;
 }
 
@@ -167,16 +166,14 @@ function hrefFor(
   if (app === self) return new URL(path, document.baseURI).pathname;
   const system = systems.get(app);
   if (local) {
-    const localHref = localTarget(app, path, system);
+    const localHref = localTarget(app, path);
     if (localHref) return localHref;
   }
   if (!system || system.online !== true || !system.url) return null;
   return joinUrl(path, system.url);
 }
 
-function localTarget(repo: string, path: string, system: CatalogSystem | undefined): string | null {
-  const localUrl = system && typeof system.localUrl === 'string' ? system.localUrl.trim() : '';
-  if (localUrl) return joinUrl(path, localUrl);
+function localTarget(repo: string, path: string): string | null {
   if (LOCAL_ORIGINS[repo]) return new URL(path, LOCAL_ORIGINS[repo]).toString();
   return null;
 }
@@ -206,8 +203,7 @@ const HRM_BACKUP: CatalogSystem = {
 export function appHref(repo: string, path: string, systems: CatalogSystem[] | null): string | null {
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
   if (local) {
-    const listed = (systems ?? []).find((item) => item.repo === repo);
-    const localHref = localTarget(repo, path, listed);
+    const localHref = localTarget(repo, path);
     if (localHref) return localHref;
   }
   const list = systems ?? (repo === 'noah-hrm' ? [HRM_BACKUP] : []);
@@ -217,14 +213,14 @@ export function appHref(repo: string, path: string, systems: CatalogSystem[] | n
 }
 
 export function portalEntry(
-  catalog: { systems?: readonly { repo?: string; url?: string; localUrl?: string; online?: boolean }[] } | null,
+  catalog: { systems?: readonly { repo?: string; url?: string; online?: boolean }[] } | null,
   path = '',
 ): string {
   const systems = catalog ? catalog.systems ?? [] : FALLBACK.systems;
   const system = systems.find((item) => item?.repo === 'noah-portal');
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
   if (local) {
-    const localHref = localTarget('noah-portal', path, system as CatalogSystem | undefined);
+    const localHref = localTarget('noah-portal', path);
     if (localHref) return localHref;
   }
   if (!system || system.online !== true || !system.url) return '';
