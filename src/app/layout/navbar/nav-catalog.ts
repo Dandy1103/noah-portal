@@ -46,7 +46,7 @@ export interface NavGroup {
 const LOCAL_ORIGINS: Record<string, string> = {
   'noah-portal': 'http://localhost:4200/',
   'noah-hrm': 'http://localhost:4201/',
-  'noah-apps': 'http://localhost:4202/',
+  'noah-apps': 'http://localhost:4200/apps/',
 };
 
 const FALLBACK: NavCatalog = {
