@@ -241,12 +241,12 @@ npm start
 
 ### Railway 設定
 
-Portal 使用根目錄的 `Dockerfile`，健康檢查路徑為 `/healthz`。Keycloak 可另開服務，以 `keycloak/Dockerfile` 建置品牌登入頁。上線時為 Keycloak 設定 HTTPS 網址 `login.dandy-cheng.com`、PostgreSQL 與正式 realm。建立 Portal 的 OIDC client，開啟 Client authentication 和 Standard flow，要求 S256 PKCE，登入回呼填 `https://noahportal.dandy-cheng.com/auth/callback`。
+Portal 使用根目錄的 `Dockerfile`，健康檢查路徑為 `/healthz`。品牌登入頁在 `noah-keycloak`，不在這個 repo。帳號建好之前，不要改 noah-core 的 `OIDC_ISSUER_URL`。本機若沒有 `.env.local`、改走本機 Keycloak，image 也是從旁邊的 `noah-keycloak` 建。
 
 | 變數 | 值 |
 |---|---|
 | `APP_ORIGIN` | Portal 的 HTTPS 網址，例如 `https://noahportal.dandy-cheng.com` |
-| `OIDC_ISSUER_URL` | Keycloak realm 的 HTTPS 網址，例如 `https://login.dandy-cheng.com/realms/noah` |
+| `OIDC_ISSUER_URL` | Keycloak realm 的 HTTPS 網址，例如 `https://login.dandy-cheng.com/realms/noah-identity` |
 | `OIDC_CLIENT_ID` | Keycloak client ID |
 | `OIDC_CLIENT_SECRET` | Keycloak client secret |
 | `DATABASE_URL` | Portal 員工資料庫的 PostgreSQL 連線網址 |

@@ -90,8 +90,7 @@ const FALLBACK: NavCatalog = {
 export function catalogUrl(): string {
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
   if (local) return 'http://localhost:3002/api/apps/catalog';
-  if (location.hostname === 'noahapps.dandy-cheng.com') return '/api/apps/catalog';
-  return 'https://noahapps.dandy-cheng.com/api/apps/catalog';
+  return new URL('/api/apps/catalog', location.origin).href;
 }
 
 export function fallbackGroups(self: string): NavGroup[] {

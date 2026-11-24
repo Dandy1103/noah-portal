@@ -98,7 +98,15 @@ copy .env.local.example .env.local
 
 **HRM** 同理：複製 `noah-hrm/.env.local.example`，client 改拿 `noah-hrm` 的 secret。
 
-有 `.env.local` 且裡面有 `OIDC_ISSUER_URL` 時，`npm start` **不會**再起本機 `8081`。改完 `.env.local` 一定要重跑 `npm start`。
+有 `.env.local` 且裡面有 `OIDC_ISSUER_URL` 時，`npm start` **不會**再起本機 `8081`。登入會轉到本機 `noah-core`（`127.0.0.1:8080`），再進同一個 Cloud-IAM。先在 `noah-core` 執行 `mvn`。Cloud-IAM 的 `noah-core` client 要允許這些回呼：
+
+```text
+http://localhost:4200/login/oauth2/code/noah
+http://localhost:4201/login/oauth2/code/noah
+http://localhost:4203/login/oauth2/code/noah
+```
+
+改完 `.env.local` 一定要重跑 `npm start`。
 
 ### 日常啟動
 
@@ -107,7 +115,7 @@ cd noah-portal
 npm start
 ```
 
-瀏覽器開 `http://localhost:4200/`，應跳到 `lemur-7.cloud-iam.com`，不是 `localhost:8081`。
+瀏覽器開 `http://localhost:4200/`，應先到本機 core，再跳到 `lemur-7.cloud-iam.com`，不是 `localhost:8081`。
 
 ```cmd
 cd noah-hrm
@@ -131,7 +139,7 @@ npm start
 
 新站接 SSO：自建 client、Standard flow、放 secret、`Valid redirect URIs` 填實際 callback、`APP_ORIGIN` 填瀏覽器開的網址。
 
-真的要暫時用本機 Keycloak：刪掉或改名 `.env.local` 再 `npm start`（僅備援）。
+真的要暫時用本機 Keycloak：刪掉或改名 `.env.local` 再 `npm start`（僅備援）。image 從旁邊的 `noah-keycloak` 建，這個 repo 沒有登入主題。
 
 ## 遇到問題先查哪裡
 

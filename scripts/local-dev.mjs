@@ -149,6 +149,7 @@ async function main() {
             HRM_KEYCLOAK_CLIENT_ID: '',
             HRM_KEYCLOAK_CLIENT_SECRET: '',
             HRM_DEV_SSO_ENABLED: 'false',
+            CORE_URL: 'http://127.0.0.1:8080',
             ...external,
         };
     } else {
@@ -177,7 +178,7 @@ async function main() {
         ? launch('cmd.exe', ['/d', '/c', 'mvnw.cmd', '-Dmaven.repo.local=tmp/java-tools/m2', 'spring-boot:run'], env)
         : launch('sh', ['./mvnw', '-Dmaven.repo.local=tmp/java-tools/m2', 'spring-boot:run'], env)];
     processes.push(launch(process.execPath, ['node_modules/@angular/cli/bin/ng.js',
-        'serve', '--host', 'localhost', '--port', '4200']));
+        'serve', '--host', 'localhost', '--port', '4200'], env));
 
     const firstExit = Promise.race(processes);
     const readyUrls = ['http://localhost:' + port + '/healthz',

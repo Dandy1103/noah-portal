@@ -17,8 +17,8 @@ services:
 
   keycloak:
     build:
-      context: ..
-      dockerfile: keycloak/Dockerfile
+      context: ../../noah-keycloak
+      dockerfile: Dockerfile
     command: [start-dev, --import-realm]
     environment:
       KC_HOSTNAME: http://localhost:8081

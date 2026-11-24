@@ -22,11 +22,25 @@ interface InfoFeed {
   count: number;
 }
 
+type ServiceIcon = 'hrm' | 'crm' | 'erp' | 'itsm' | 'lms' | 'approval' | 'affairs' | 'payroll' | 'project' | 'app';
+
 interface ServiceTile {
   label: string;
-  icon: 'hrm' | 'crm' | 'erp' | 'itsm' | 'lms' | 'approval' | 'affairs' | 'payroll' | 'project';
+  icon: ServiceIcon;
   href: string | null;
 }
+
+const SERVICE_ICONS: Record<string, ServiceIcon> = {
+  'noah-hrm': 'hrm',
+  'noah-crm': 'crm',
+  'noah-erp': 'erp',
+  'noah-itsm': 'itsm',
+  'noah-lms': 'lms',
+  'noah-approval': 'approval',
+  'noah-affairs': 'affairs',
+  'noah-payroll': 'payroll',
+  'noah-project': 'project',
+};
 
 interface Notice {
   stamp: string;
@@ -262,18 +276,15 @@ export class DashboardComponent {
   });
 
   readonly services = computed((): ServiceTile[] => {
-    const hrmUrl = appHref('noah-hrm', '', this.catalogSystems());
-    return [
-      { label: 'HRM', icon: 'hrm', href: hrmUrl },
-      { label: 'CRM', icon: 'crm', href: null },
-      { label: 'ERP', icon: 'erp', href: null },
-      { label: 'ITSM', icon: 'itsm', href: null },
-      { label: 'LMS', icon: 'lms', href: null },
-      { label: '簽核', icon: 'approval', href: null },
-      { label: '總務', icon: 'affairs', href: null },
-      { label: '薪資', icon: 'payroll', href: null },
-      { label: '專案', icon: 'project', href: null },
-    ];
+    const systems = this.catalogSystems();
+    if (!systems) return [];
+    return systems
+      .filter((system) => system.repo && system.repo !== 'noah-portal')
+      .map((system) => ({
+        label: system.name?.trim() || system.repo,
+        icon: SERVICE_ICONS[system.repo] ?? 'app',
+        href: appHref(system.repo, '', systems),
+      }));
   });
 
   constructor() {

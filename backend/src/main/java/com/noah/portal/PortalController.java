@@ -267,6 +267,8 @@ final class PortalController {
         var cookie = ResponseCookie.from(settings.cookieName(), "").path("/").httpOnly(true).secure(settings.secure())
                 .sameSite("Lax").maxAge(Duration.ZERO).build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, ResponseCookie.from("noah-core.sid", "").path("/").httpOnly(true)
+                .sameSite("Lax").maxAge(Duration.ZERO).build().toString());
     }
 
     private static void requireOrigin(HttpServletRequest request, String expected) {
