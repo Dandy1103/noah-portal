@@ -34,7 +34,7 @@
 .u-bg-surface { background-color: var(--color-surface); }
 .u-bg-selected { background-color: var(--color-surface-selected); }
 .u-text-on-brand { color: var(--color-surface); }
-.u-text-white { color: #ffffff; }
+.u-text-white { color: var(--color-surface-raised); }
 .u-text-brand { color: var(--color-primary); }
 .u-text-secondary { color: var(--color-text-secondary); }
 .u-text-danger { color: var(--color-danger); }

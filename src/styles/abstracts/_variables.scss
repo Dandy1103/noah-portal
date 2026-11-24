@@ -1,29 +1,5 @@
 
 :root {
-    // Brand
-    --color-primary: #407fec;
-    --color-primary-hover: #3066c8;
-  
-    // Background
-    --color-background: #f8fafc;
-    --color-surface: #ffffff;
-    --color-surface-selected: #edf2f8;
-    --color-sidebar: #ffffff;
-  
-    // Text
-    --color-text-primary: #0f172a;
-    --color-text-secondary: #64748b;
-    --color-text-muted: #94a3b8;
-  
-    // Border
-    --color-border: #e2e8f0;
-  
-    // Status
-    --color-success: #16a34a;
-    --color-warning: #d97706;
-    --color-danger: #dc2626;
-    --color-info: #0284c7;
-  
     // Typography
     --font-family-base: Inter, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
   
@@ -38,10 +14,6 @@
     --radius-sm: 4px;
     --radius-md: 8px;
     --radius-lg: 12px;
-  
-    // Shadow
-    --shadow-sm: 0 1px 3px rgb(15 23 42 / 6%);
-    --shadow-md: 0 4px 12px rgb(15 23 42 / 8%);
   
     // Layout
     --header-height: 60px;

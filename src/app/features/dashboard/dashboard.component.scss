@@ -120,7 +120,7 @@
     place-items: center;
     border-radius: 999px;
     background: var(--color-danger);
-    color: #fff;
+    color: var(--color-surface-raised);
     font-size: 11px;
     font-weight: 700;
     line-height: 1;
@@ -161,7 +161,7 @@
 .home__board h2 {
     padding: 12px 20px;
     border-bottom: 1px solid var(--color-border);
-    background: #f8fafc;
+    background: var(--color-surface-subtle);
     font-size: 14px;
     font-weight: 600;
 }
@@ -177,7 +177,7 @@
     padding: 0 12px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    background: #fff;
+    background: var(--color-surface-raised);
     font-size: 14px;
 }
 
@@ -208,19 +208,19 @@
 }
 
 .home__table th {
-    background: #fff;
-    color: #334155;
+    background: var(--color-surface-raised);
+    color: var(--color-text-primary);
     font-weight: 600;
     border-bottom: 2px solid var(--color-primary);
 }
 
 .home__table td {
-    border-bottom: 1px solid #e2e8f0;
-    background: #fff;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-raised);
 }
 
 .home__table tbody tr:nth-child(even) td {
-    background: #e8eef4;
+    background: var(--color-surface-muted);
 }
 
 .home__table tbody tr:last-child td {
@@ -239,7 +239,7 @@
 .home__calendar {
     padding: 14px 12px 12px;
     border-radius: 16px;
-    background: #eef2f6;
+    background: var(--color-surface);
 }
 
 .home__calendar-bar {
@@ -266,7 +266,7 @@
     padding: 0 8px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    background: #fff;
+    background: var(--color-surface-raised);
     cursor: pointer;
 }
 
@@ -363,7 +363,7 @@
 
 .home__pager button.is-current {
     background: var(--color-primary);
-    color: #fff;
+    color: var(--color-surface-raised);
     font-weight: 600;
 }
 
@@ -389,21 +389,21 @@
     padding: var(--spacing-md);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
-    background: #f8fafc;
+    background: var(--color-surface-subtle);
 }
 
 .home__badge {
     overflow: hidden;
-    border: 1px solid #c5d0de;
+    border: 1px solid var(--color-border-strong);
     border-radius: 12px;
-    background: #fff;
+    background: var(--color-surface-raised);
     box-shadow: var(--shadow-md);
 }
 
 .home__badge-head {
     padding: 16px 16px 14px;
     background: var(--color-primary);
-    color: #fff;
+    color: var(--color-surface-raised);
     text-align: center;
 }
 
@@ -428,7 +428,7 @@
     place-items: center;
     border: 1px solid var(--color-border);
     border-radius: 4px;
-    background: #eef2f6;
+    background: var(--color-surface);
     color: var(--color-primary);
     font-size: 40px;
     font-weight: 600;
@@ -473,7 +473,7 @@
 
 .home__checkin,
 .home__apps {
-    background: #eef2f6;
+    background: var(--color-surface);
 }
 
 .home__checkin {
@@ -510,7 +510,7 @@
     justify-content: space-between;
     gap: 12px;
     padding: 8px 0;
-    border-top: 1px solid #dde3ea;
+    border-top: 1px solid var(--color-surface-muted);
     font-size: 14px;
 }
 
@@ -530,7 +530,7 @@
     border: 0;
     border-radius: var(--radius-sm);
     background: var(--color-primary);
-    color: #fff;
+    color: var(--color-surface-raised);
     font-weight: 600;
     cursor: pointer;
 }
@@ -545,7 +545,7 @@
 }
 
 .home__checkin button:disabled {
-    background: #d5dde6;
+    background: var(--color-surface-muted);
     color: var(--color-text-secondary);
     cursor: default;
 }
@@ -588,11 +588,11 @@
 }
 
 a.home__service:hover {
-    background: #fff;
+    background: var(--color-surface-raised);
 }
 
 a.home__service:hover .home__glyph {
-    background: #e8eef5;
+    background: var(--color-surface-muted);
 }
 
 a.home__service:focus-visible {
@@ -614,7 +614,7 @@ a.home__service:focus-visible {
     height: 56px;
     place-items: center;
     border-radius: 14px;
-    background: #fff;
+    background: var(--color-surface-raised);
     color: var(--color-primary);
 }
 
