@@ -21,12 +21,7 @@
     "lib": [
       "ES2022",
       "dom"
-    ],
-    "baseUrl": "./",
-    "paths": {
-      "@dandy1103/navbar": ["../noah-ui/projects/ui/src/lib/navbar/navbar.component.ts"],
-      "@dandy1103/header": ["../noah-ui/projects/ui/src/lib/header/header.component.ts"]
-    }
+    ]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
