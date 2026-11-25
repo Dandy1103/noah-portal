@@ -1,11 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HeaderComponent } from '../../layout/header/header.component';
 
 @Component({
     selector: 'noah-login',
     standalone: true,
-    imports: [HeaderComponent],
     templateUrl: './login.component.html',
     styleUrl: './login.component.scss'
 })

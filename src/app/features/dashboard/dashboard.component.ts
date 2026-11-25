@@ -4,7 +4,7 @@ import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { SessionService } from '../auth/session.service';
-import { appHref, loadCatalog, type CatalogSystem } from '../../layout/navbar/nav-catalog';
+import { appHref, loadCatalog, type CatalogSystem } from '../../core/app-catalog';
 
 interface EmployeeProfile {
   employeeNumber: string;
