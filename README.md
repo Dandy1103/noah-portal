@@ -223,7 +223,7 @@ ng test
 
 本機跟線上同一套登入（Cloud-IAM `noah-identity`）。步驟、回呼網址、`.env.local` 填法看 [網站部署手冊 → 本機登入](docs/DEPLOYMENT.md#本機登入跟線上同一套-cloud-iam)。
 
-準備 Node.js 20.12+、Git、Docker Desktop（本機資料庫才要）、JDK 21。Portal：
+準備 Node.js 20.12+、Git。Portal 本機只啟動 Angular 前端；登入和 API 預設經 `https://noah-platform.dandy-cheng.com` 轉送到 develop Core，不需啟動本機 Core。HRM 也只需執行 `npm start` 啟動前端，不需在 HRM 專案安裝 JDK。可用 `CORE_URL` 覆寫 Core 位址。
 
 ```cmd
 copy .env.local.example .env.local
@@ -237,7 +237,7 @@ npm start
 
 開 [本機 Portal](http://localhost:4200/)，應導向 Cloud-IAM，不是 `localhost:8081`。HRM 同樣用自己的 `.env.local` 後 `npm start`（[4201](http://localhost:4201/)）。
 
-第一次用新資料庫：先在 `noah-hrm` 跑 `npm run db:migrate`（或先開 HRM），再開 Portal。
+Core 啟動時會執行資料庫遷移，請先確認 Core 已連線到預期的資料庫，再啟動前端。
 
 ### Railway 設定
 

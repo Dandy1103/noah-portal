@@ -1,11 +1,7 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { createReadStream, createWriteStream, existsSync, mkdirSync, mkdtempSync, readFileSync,
-    readdirSync, renameSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:net';
-import { basename, dirname, delimiter, join } from 'node:path';
-import { Readable } from 'node:stream';
-import { pipeline } from 'node:stream/promises';
+import { dirname, delimiter, join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
@@ -15,7 +11,6 @@ import { startLocalIdentity } from '../keycloak/shared-local-identity.mjs';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const windows = process.platform === 'win32';
 const npm = process.env.npm_execpath;
-const javaCache = join(root, 'tmp', 'java-tools');
 const envFile = join(root, '.env.keycloak');
 const children = new Set();
 
@@ -35,51 +30,6 @@ function dockerCommand() {
     const result = spawnSync(docker, ['info', '--format', '{{.ServerVersion}}'], { stdio: 'ignore', timeout: 12000 });
     if (result.error || result.status !== 0) throw new Error('請先安裝並開啟 Docker Desktop，等 Engine running 後再執行。');
     return docker;
-}
-
-function hasJava(home) {
-    const name = windows ? 'javac.exe' : 'javac';
-    const bin = home ? join(home, 'bin', name) : name;
-    const result = spawnSync(bin, ['-version'], { encoding: 'utf8', timeout: 6000 });
-    return result.status === 0 && /javac 21(?:\.|\s|$)/.test(result.stdout + result.stderr);
-}
-
-async function selectJava() {
-    if (process.env.JAVA_HOME && hasJava(process.env.JAVA_HOME)) return process.env.JAVA_HOME;
-    if (!process.env.JAVA_HOME && hasJava()) return null;
-    if (!windows) throw new Error('請安裝 JDK 21，並設定 JAVA_HOME 後再執行。');
-
-    mkdirSync(javaCache, { recursive: true });
-    const existing = readdirSync(javaCache, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory() && entry.name.startsWith('jdk-'))
-        .map((entry) => join(javaCache, entry.name)).find(hasJava);
-    if (existing) return existing;
-
-    const machine = process.env.PROCESSOR_ARCHITEW6432 || process.env.PROCESSOR_ARCHITECTURE || '';
-    const arch = /^arm64$/i.test(machine) ? 'aarch64' : 'x64';
-    const url = 'https://aka.ms/download-jdk/microsoft-jdk-21-windows-' + arch + '.zip';
-    const temp = mkdtempSync(join(javaCache, 'download-'));
-    const archive = join(temp, 'jdk.zip');
-    console.log('正在下載本機開發用的 JDK 21，第一次啟動可能需要幾分鐘。');
-    try {
-        const checksum = await fetch(url + '.sha256sum.txt', { signal: AbortSignal.timeout(30000) });
-        const expected = checksum.ok && (await checksum.text()).match(/\b[a-f0-9]{64}\b/i)?.[0].toLowerCase();
-        if (!expected) throw new Error('無法取得 JDK 的 SHA-256 校驗資料。');
-        const response = await fetch(url, { signal: AbortSignal.timeout(300000) });
-        if (!response.ok || !response.body) throw new Error('JDK 下載失敗，請稍後再試。');
-        await pipeline(Readable.fromWeb(response.body), createWriteStream(archive, { flags: 'wx' }));
-        const hash = createHash('sha256');
-        for await (const chunk of createReadStream(archive)) hash.update(chunk);
-        if (hash.digest('hex') !== expected) throw new Error('JDK 檔案與官方 SHA-256 不符，請重新執行。');
-        run('tar.exe', ['-xf', archive, '-C', temp]);
-        const home = readdirSync(temp).map((name) => join(temp, name)).find(hasJava);
-        if (!home) throw new Error('JDK 解壓縮後找不到 Java 21。');
-        const installation = join(javaCache, basename(home));
-        if (!hasJava(installation)) renameSync(home, installation);
-        return installation;
-    } finally {
-        rmSync(temp, { recursive: true, force: true });
-    }
 }
 
 function installFrontend(directory) {
@@ -131,12 +81,10 @@ async function waitForApp(url, signal) {
 
 async function main() {
     if (process.argv[2]) throw new Error('請在要開發的專案目錄執行 npm start。');
-    const port = 3000;
     const frontend = 4200;
-    for (const [wanted, host] of [[port, '127.0.0.1'], [frontend, 'localhost']]) {
+    for (const [wanted, host] of [[frontend, 'localhost']]) {
         if (await listening(wanted, host)) throw new Error(wanted + ' 已被占用。請先停止舊的開發程序。');
     }
-    const java = await selectJava();
     const externalFile = join(root, '.env.local');
     const external = existsSync(externalFile) ? parseEnv(readFileSync(externalFile, 'utf8')) : {};
     let configuration;
@@ -149,7 +97,6 @@ async function main() {
             HRM_KEYCLOAK_CLIENT_ID: '',
             HRM_KEYCLOAK_CLIENT_SECRET: '',
             HRM_DEV_SSO_ENABLED: 'false',
-            CORE_URL: 'http://127.0.0.1:8080',
             ...external,
         };
     } else {
@@ -167,28 +114,21 @@ async function main() {
     const env = {
         ...process.env,
         ...configuration,
-        ...(java && { JAVA_HOME: java, PATH: join(java, 'bin') + delimiter + process.env.PATH }),
-        MAVEN_USER_HOME: javaCache,
-        PORT: String(port),
+        CORE_URL: configuration.CORE_URL || process.env.CORE_URL || 'https://noah-platform.dandy-cheng.com',
         APP_ORIGIN: 'http://localhost:' + frontend,
-        SERVER_ADDRESS: '127.0.0.1',
-        DEBUG: 'false',
     };
-    const processes = [windows
-        ? launch('cmd.exe', ['/d', '/c', 'mvnw.cmd', '-Dmaven.repo.local=tmp/java-tools/m2', 'spring-boot:run'], env)
-        : launch('sh', ['./mvnw', '-Dmaven.repo.local=tmp/java-tools/m2', 'spring-boot:run'], env)];
-    processes.push(launch(process.execPath, ['node_modules/@angular/cli/bin/ng.js',
-        'serve', '--host', 'localhost', '--port', '4200'], env));
+    const processExit = launch(process.execPath, ['node_modules/@angular/cli/bin/ng.js',
+        'serve', '--port', '4200'], env);
 
-    const firstExit = Promise.race(processes);
-    const readyUrls = ['http://localhost:' + port + '/healthz',
+    const firstExit = processExit;
+    const readyUrls = [new URL('/api/apps/healthz', env.CORE_URL).href,
         'http://localhost:4200/assets/images/logo.png'];
     const startup = new AbortController();
     const ready = await Promise.race([
         Promise.all(readyUrls.map((url) => waitForApp(url, startup.signal))),
         firstExit.then(() => null),
     ]).finally(() => startup.abort());
-    if (!ready) throw new Error('服務提前停止，請查看 Maven 或 Angular 的訊息。');
+    if (!ready) throw new Error('服務提前停止，請查看 Core 或 Angular 的訊息。');
     console.log('開啟 http://localhost:' + frontend + '/');
     if (!external.OIDC_ISSUER_URL) console.log('本機測試帳號 ' + demoLogin.toUpperCase() + '，初始密碼在 .env.shared-keycloak 的 KEYCLOAK_DEMO_PASSWORD。');
     process.exitCode = await firstExit;
